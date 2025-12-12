@@ -1,0 +1,42 @@
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# === Virtual Environment ===
+venv/
+env/
+ENV/
+
+# === Streamlit Cache ===
+.streamlit/
+.streamlit/secrets.toml
+
+# === Uploaded Files ===
+Uploaded_Resumes/
+*.pdf
+
+# === System Files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+logs/
+*.log
+
+# === Data that should NOT be in Git ===
+data/samples/
+data/temp/
+data/*.csv
+data/*.xlsx
+
+# === IDE files ===
+.vscode/
+.idea/
+
+# === OS Files ===
+*.swp
+*.swo

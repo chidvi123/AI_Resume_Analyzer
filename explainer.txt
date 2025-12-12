@@ -1,0 +1,30 @@
+🔔 backend->parser->resume_parser
+
+we have used this 
+pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+
+the explanation ⬇️
+
+# Regex pattern to extract email addresses
+# [a-zA-Z0-9._%+-]+  → Matches the username part (letters, digits, ., _, %, +, -), one or more characters
+# @                 → Literal @ symbol
+# [a-zA-Z0-9.-]+    → Matches the domain name (letters, digits, ., -), one or more characters
+# \.                → Literal dot before extension
+# [a-zA-Z]{2,}      → Matches the extension (like com, in, org) with at least 2 letters
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+🔔 backend->parser->resume_parser
+
+we have used this 
+pattern = r"(\+?\d{1,3}[- ]?)?\d{10}"
+the explanation ⬇️
+
+# Regex pattern to extract phone numbers
+# (\+?\d{1,3}[- ]?)? → Optional country code part:
+#    \+?            → Optional '+' sign
+#    \d{1,3}        → 1 to 3 digits (country code like 1, 91, 971)
+#    [- ]?          → Optional '-' or space after the country code
+#    (…) ?          → Entire country-code block is optional
+#
+# \d{10}            → Exactly 10 digits (Indian phone number format)
+
