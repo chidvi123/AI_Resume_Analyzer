@@ -28,3 +28,31 @@ the explanation ⬇️
 #
 # \d{10}            → Exactly 10 digits (Indian phone number format)
 
+
+/////////////////////////////////////////////
+
+1️⃣ Activate venv
+
+source venv/Scripts/activate
+
+
+2️⃣ Pull latest code
+
+git pull
+
+
+3️⃣ Run app
+
+streamlit run app/main.py
+
+
+4️⃣ Do one small feature
+5️⃣ Commit
+
+git add .
+git commit -m "message"
+
+
+6️⃣ Push
+
+git push
