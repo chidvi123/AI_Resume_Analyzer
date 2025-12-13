@@ -69,4 +69,10 @@ ai_resume_analyzer/
 └── .gitignore
 
 
-<p align="center"> <img src="docs/ScreenShots/ProjectStructure.png" alt="Project Structure Diagram" width="850" /> </p>
+<p align="center">
+  <img 
+    src="docs/ScreenShots/ProjectStructure.png"
+    alt="Project Structure Diagram"
+    width="850"
+  />
+</p>
