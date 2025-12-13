@@ -67,8 +67,13 @@ ai_resume_analyzer/
 ├── README.md
 ├── requirements.txt
 └── .gitignore
+```
 
-
-![Project Structure Diagram](https://raw.githubusercontent.com/chidvi123/AI_Resume_Analyzer/main/docs/screenshots/ProjectStructure.png)
-
-
+🗂️ Project Structure Diagram
+<p align="center">
+  <img 
+    src="docs/screenshots/ProjectStructure.png"
+    alt="Project Structure Diagram"
+    width="850"
+  />
+</p>
