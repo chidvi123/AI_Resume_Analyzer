@@ -8,6 +8,8 @@ import streamlit as st
 from backend.utils.helpers import save_uploaded_file,show_pdf
 from backend.parser.pdf_reader import extract_text_from_pdf
 from backend.parser.resume_parser import parse_resume
+from backend.analysis.experience_level import detect_experience_level
+
 
 st.set_page_config(
     page_title="AI Resume Analyzer",
@@ -59,6 +61,17 @@ def main():
                 st.write("**Phone:**", parsed_data["phone"])
                 st.write("**Skills Found:**", parsed_data["skills"])
             
+           #experience_level
+
+            if extracted_text:
+                experience_level=detect_experience_level(extracted_text,num_pages=None)
+            else:
+                experience_level="Unknown"
+
+            st.subheader("Experience Classification")
+            st.success(f"Based on your resume content,you are classified as **{experience_level}**.")
+
+
     elif page=="Feedback":
         st.title("Feedback Section")
         st.write("User can submit feedback here ")
