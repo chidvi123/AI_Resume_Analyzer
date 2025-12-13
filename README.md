@@ -1,5 +1,13 @@
 # AI Resume Analyzer
 
+A Streamlit-based application that analyzes resumes to extract details
+and classify experience levels (Fresher / Intermediate / Experienced).
+
+---
+
+## 📁 Project Structure
+
+```text
 ai_resume_analyzer/
 │
 ├── app/                    # Streamlit UI
@@ -18,16 +26,3 @@ ai_resume_analyzer/
 │
 ├── README.md
 └── requirements.txt
-
-▶️ How to Run the Project
-# Create virtual environment
-python -m venv venv
-
-# Activate environment
-source venv/Scripts/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the app
-streamlit run app/main.py
