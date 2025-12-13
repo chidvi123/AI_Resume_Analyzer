@@ -68,4 +68,5 @@ ai_resume_analyzer/
 ├── requirements.txt
 └── .gitignore
 
+
 <p align="center"> <img src="docs/ScreenShots/ProjectStructure.png" alt="Project Structure Diagram" width="850" /> </p>
