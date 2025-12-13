@@ -69,5 +69,6 @@ ai_resume_analyzer/
 └── .gitignore
 
 
-![Project Structure Diagram](docs/screenshots/ProjectStructure.png)
+![Project Structure Diagram](https://raw.githubusercontent.com/chidvi123/AI_Resume_Analyzer/main/docs/screenshots/ProjectStructure.png)
+
 
