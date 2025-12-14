@@ -1,7 +1,3 @@
-
-
-
-
 def detect_experience_level(text:str,num_pages:int|None=None)->str:
     text=text.lower()
 

@@ -13,3 +13,15 @@ ROLE_SKILLS = {
         "seaborn"
     ]
 }
+
+SKILL_ALIASES = {
+    "ml": "machine learning",
+    "machine-learning": "machine learning",
+    "dl": "deep learning",
+    "deep-learning": "deep learning",
+    "ai": "artificial intelligence",
+    "js": "javascript",
+    "nodejs": "node.js",
+    "py": "python"
+}
+

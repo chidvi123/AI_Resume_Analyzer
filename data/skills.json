@@ -19,5 +19,6 @@
     "Pandas",
     "NumPy",
     "Power BI",
-    "Excel"
+    "Excel",
+    "Scikit-learn"
 ]

@@ -33,7 +33,7 @@ def extract_skills(text:str,skills_file="data/skills.json"):
 
     for skill in skills_list:
         if skill.lower() in text_lower:
-            found.append(skill)
+            found.append(skill.lower())
 
     return list(set(found))
 
