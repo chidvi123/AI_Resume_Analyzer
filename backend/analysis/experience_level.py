@@ -1,6 +1,17 @@
+"""
+    Determines candidate experience level using strong resume signals.
+
+    Logic:
+    - Work experience sections → Experienced
+    - Internship sections → Intermediate
+    - Page count used as fallback heuristic
+    - Avoids false positives from summary self-claims
+
+    This is a rule-based classifier designed for explainability,
+    not a machine learning model.
+"""
 def detect_experience_level(text:str,num_pages:int|None=None)->str:
     text=text.lower()
-
     internship_keywords=[
         "intern","internship","trainee"
     ]

@@ -1,3 +1,14 @@
+"""
+Resume scoring module.
+
+Uses heuristic rules to evaluate resume completeness
+(skills, experience, projects, etc.).
+
+This score is NOT a hiring decision metric.
+It is used as a baseline quality indicator to guide improvements.
+"""
+
+
 def calculate_resume_score(text: str) -> dict:
 
     text = text.lower()

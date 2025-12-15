@@ -1,10 +1,14 @@
+import streamlit as st
 from sentence_transformers import SentenceTransformer
 
-_model = SentenceTransformer("all-MiniLM-L6-v2")
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
-def get_embedding(text:str):
+@st.cache_data(show_spinner=False)
+def get_embedding(text: str):
     if not text:
         return None
-    
-    embedding=_model.encode(text)
-    return embedding
+
+    model = load_embedding_model()
+    return model.encode(text)
