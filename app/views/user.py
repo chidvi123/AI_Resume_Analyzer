@@ -14,6 +14,7 @@ from backend.utils.text_cleaner import clean_resume_text
 from backend.utils.normalizer import normalize_skills
 from backend.utils.sematic_text_builder import build_semantic_resume_text
 
+#if u add one in job_role_descriptions you should add role_skills too
 
 # ================================
 # MODULE 1: USER RESUME ANALYSIS
@@ -23,13 +24,11 @@ from backend.utils.sematic_text_builder import build_semantic_resume_text
 
 def user_page():
 
-    
     if "admin_analytics" not in st.session_state:
         st.session_state["admin_analytics"] = []
 
     if "analytics_saved" not in st.session_state:
         st.session_state["analytics_saved"] = False
-
 
     st.title("User Dashboard..")
     st.write("Please upload your resume in PDF Format to begin analysis.")
@@ -42,7 +41,6 @@ def user_page():
 
     st.success("Resume uploaded successfully..")
     st.session_state["analytics_saved"] = False
-
 
     file_path = save_uploaded_file(uploaded_file)
     st.write("File saved at :", file_path)
@@ -65,11 +63,7 @@ def user_page():
         st.write(extracted_text)
 
     st.subheader("Extracted Resume Info")
-    try:
-        parsed_data = parse_resume(extracted_text)
-    except Exception:
-        st.error("Resume parsing failed. Please upload a standard resume format.")
-        st.stop()
+    parsed_data = parse_resume(extracted_text)
 
     with st.expander("Show Name, Email, Phone, Skills Extracted from resume"):
         st.write("**Name:**", parsed_data["name"])
@@ -77,15 +71,13 @@ def user_page():
         st.write("**Phone:**", parsed_data["phone"])
         st.write("**Skills Found:**", parsed_data["skills"])
 
-    # experience level
-    experience_level = detect_experience_level(extracted_text, num_pages=None)
+    experience_level = detect_experience_level(extracted_text)
 
     st.subheader("Experience Classification")
     st.success(
         f"Based on your resume content, you are classified as **{experience_level}**."
     )
 
-    # resume score caption
     st.caption(
         "ℹ️ Resume Score is calculated using rule-based heuristics "
         "(sections like skills, experience, projects). "
@@ -108,96 +100,95 @@ def user_page():
     st.subheader("Select Target Job Role")
 
     available_roles = list(JOB_ROLE_DESCRIPTIONS.keys())
-
     target_role = st.selectbox(
         "Choose the role you are targeting",
         available_roles
     )
 
-    # ================= SKILL GAP =================
+    if "last_selected_role" not in st.session_state:
+        st.session_state["last_selected_role"] = target_role
 
-    st.caption(
-        "ℹ️ Skill Gap Analysis compares your resume skills with the selected job role. "
-        "Missing skills indicate areas to improve, not disqualification."
-    )
+    if st.session_state["last_selected_role"] != target_role:
+        st.session_state["analytics_saved"] = False
+        st.session_state["last_selected_role"] = target_role
 
-    required_skills = ROLE_SKILLS.get(target_role, [])
-    resume_skills = normalize_skills(parsed_data.get("skills", []))
+    confirm_analysis = st.button("Confirm")
 
-    if resume_skills:
-        skill_gap = analyze_skill_gap(resume_skills, required_skills)
-        present_skills = skill_gap["present_skills"]
-        missing_skills = skill_gap["missing_skills"]
-    else:
-        present_skills = []
-        missing_skills = []
+    # ================= SKILL GAP & MATCH (GATED) =================
 
-    st.subheader("Skill Gap Analysis")
-    st.write("**Skills you have**")
+    if confirm_analysis:
 
-    if present_skills:
+        st.caption(
+            "ℹ️ Skill Gap Analysis compares your resume skills with the selected job role. "
+            "Missing skills indicate areas to improve, not disqualification."
+        )
+
+        required_skills = ROLE_SKILLS.get(target_role, [])
+        resume_skills = normalize_skills(parsed_data.get("skills", []))
+
+        if resume_skills:
+            skill_gap = analyze_skill_gap(resume_skills, required_skills)
+            present_skills = skill_gap["present_skills"]
+            missing_skills = skill_gap["missing_skills"]
+        else:
+            present_skills = []
+            missing_skills = []
+
+        st.subheader("Skill Gap Analysis")
+        st.write("**Skills you have**")
+
         with st.expander("Present Skills"):
-            for skill in present_skills:
-                st.write(skill)
-    else:
-        with st.expander("Present Skills"):
-            st.write("No matching skills found")
+            if present_skills:
+                for skill in present_skills:
+                    st.write(skill)
+            else:
+                st.write("No matching skills found")
 
-    st.write("**Skills you Are Missing**")
+        st.write("**Skills you Are Missing**")
 
-    if missing_skills:
         with st.expander("Missing Skills"):
-            for skill in missing_skills:
-                st.write(skill)
-    else:
-        with st.expander("Missing Skills"):
-            st.write("No missing skills")
+            if missing_skills:
+                for skill in missing_skills:
+                    st.write(skill)
+            else:
+                st.write("No missing skills")
 
-    # ================= EMBEDDINGS =================
-
-    if extracted_text:
         semantic_text = build_semantic_resume_text(
             raw_text=extracted_text,
             skills=resume_skills,
             experience_level=experience_level
         )
         resume_embedding = get_embedding(semantic_text)
-    else:
-        resume_embedding = None
 
-    job_description = JOB_ROLE_DESCRIPTIONS.get(target_role, "")
+        job_description = JOB_ROLE_DESCRIPTIONS.get(target_role, "")
 
-    @st.cache_data(show_spinner=False)
-    def get_cached_job_embedding(description: str):
-        return get_embedding(description)
+        @st.cache_data(show_spinner=False)
+        def get_cached_job_embedding(description: str):
+            return get_embedding(description)
 
-    job_embedding = get_cached_job_embedding(job_description)
+        job_embedding = get_cached_job_embedding(job_description)
 
-    st.caption(
-        "ℹ️  Job Match Score is generated using NLP embeddings and cosine similarity. "
-        "It measures semantic similarity between your resume content and the target job role. "
-        "This is an AI-assisted estimate, not an exact accuracy score."
-    )
+        st.caption(
+            "ℹ️  Job Match Score is generated using NLP embeddings and cosine similarity. "
+            "It measures semantic similarity between your resume content and the target job role. "
+            "This is an AI-assisted estimate, not an exact accuracy score."
+        )
 
-    if resume_embedding is not None and job_embedding is not None:
         match_score = cosine_similarity(resume_embedding, job_embedding)
-    else:
-        match_score = 0.0
 
-    st.subheader("Job Match Score")
-    st.write(f"{round(match_score * 100, 2)} %")
+        st.subheader("Job Match Score")
+        st.write(f"{round(match_score * 100, 2)} %")
 
-    analytics_record={
-        "timestamp": datetime.now(),
-        "experience_level": experience_level,
-        "resume_score": resume_score,
-        "target_role": target_role,
-        "job_match_score": match_score,
-        "skills_present_count": len(present_skills),
-        "skills_missing_count": len(missing_skills)
+        analytics_record = {
+            "timestamp": datetime.now(),
+            "experience_level": experience_level,
+            "resume_score": resume_score,
+            "target_role": target_role,
+            "job_match_score": match_score,
+            "skills_present_count": len(present_skills),
+            "skills_missing_count": len(missing_skills)
         }
-    
-    if not st.session_state["analytics_saved"]:
-        st.session_state["admin_analytics"].append(analytics_record)
-        st.session_state["analytics_saved"] = True
 
+        if not st.session_state["analytics_saved"]:
+            st.session_state["admin_analytics"].append(analytics_record)
+            st.session_state["analytics_saved"] = True

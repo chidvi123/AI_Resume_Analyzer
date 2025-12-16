@@ -11,6 +11,21 @@ ROLE_SKILLS = {
         "data visualization",
         "matplotlib",
         "seaborn"
+    ],
+
+    "backend_developer": [
+        "python",
+        "django",
+        "flask",
+        "rest api",
+        "api development",
+        "sql",
+        "nosql",
+        "database design",
+        "authentication",
+        "authorization",
+        "jwt",
+        "backend development"
     ]
 }
 
