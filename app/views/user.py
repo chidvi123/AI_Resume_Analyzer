@@ -14,12 +14,9 @@ from backend.utils.text_cleaner import clean_resume_text
 from backend.utils.normalizer import normalize_skills
 from backend.utils.sematic_text_builder import build_semantic_resume_text
 
-#if u add one in job_role_descriptions you should add role_skills too
-
 # ================================
 # MODULE 1: USER RESUME ANALYSIS
 # Status: Feature-complete
-# Further changes should be enhancements, not fixes
 # ================================
 
 def user_page():
@@ -114,7 +111,7 @@ def user_page():
 
     confirm_analysis = st.button("Confirm")
 
-    # ================= SKILL GAP & MATCH (GATED) =================
+    # ================= SKILL GAP & MATCH (MODIFIED) =================
 
     if confirm_analysis:
 
@@ -134,24 +131,37 @@ def user_page():
             present_skills = []
             missing_skills = []
 
+        # ======== UPDATED PRESENT SKILLS UI =========
         st.subheader("Skill Gap Analysis")
-        st.write("**Skills you have**")
 
-        with st.expander("Present Skills"):
-            if present_skills:
-                for skill in present_skills:
-                    st.write(skill)
-            else:
-                st.write("No matching skills found")
+        st.markdown("### → Your Current Skills")
 
-        st.write("**Skills you Are Missing**")
+        if present_skills:
+            skill_tags = " ".join(
+                [
+                    f"<span style='background-color:#32CD32;color:white;padding:6px 10px;"
+                    f"border-radius:12px;margin:4px;display:inline-block;'>{skill}</span>"
+                    for skill in present_skills
+                ]
+            )
+            st.markdown(skill_tags, unsafe_allow_html=True)
+        else:
+            st.info("No matching skills found")
 
-        with st.expander("Missing Skills"):
-            if missing_skills:
-                for skill in missing_skills:
-                    st.write(skill)
-            else:
-                st.write("No missing skills")
+        # ======== UPDATED MISSING SKILLS UI =========
+        st.markdown("### → Recommended Skills for You")
+
+        if missing_skills:
+            missing_tags = " ".join(
+                [
+                    f"<span style='background-color:#ff6b6b;color:white;padding:6px 10px;"
+                    f"border-radius:12px;margin:4px;display:inline-block;'>{skill}</span>"
+                    for skill in missing_skills
+                ]
+            )
+            st.markdown(missing_tags, unsafe_allow_html=True)
+        else:
+            st.success("No missing skills 🎉")
 
         semantic_text = build_semantic_resume_text(
             raw_text=extracted_text,
@@ -167,12 +177,6 @@ def user_page():
             return get_embedding(description)
 
         job_embedding = get_cached_job_embedding(job_description)
-
-        st.caption(
-            "ℹ️  Job Match Score is generated using NLP embeddings and cosine similarity. "
-            "It measures semantic similarity between your resume content and the target job role. "
-            "This is an AI-assisted estimate, not an exact accuracy score."
-        )
 
         match_score = cosine_similarity(resume_embedding, job_embedding)
 
