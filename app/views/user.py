@@ -13,6 +13,9 @@ from backend.nlp.similarity import cosine_similarity
 from backend.utils.text_cleaner import clean_resume_text
 from backend.utils.normalizer import normalize_skills
 from backend.utils.sematic_text_builder import build_semantic_resume_text
+from backend.recommender.course_recommender import get_recommended_courses
+from backend.nlp.resume_registry import add_resume_entry
+from backend.nlp.resume_similarity import find_similar_resumes
 
 # ================================
 # MODULE 1: USER RESUME ANALYSIS
@@ -111,7 +114,7 @@ def user_page():
 
     confirm_analysis = st.button("Confirm")
 
-    # ================= SKILL GAP & MATCH (MODIFIED) =================
+    # ================= SKILL GAP & MATCH ========================
 
     if confirm_analysis:
 
@@ -163,12 +166,57 @@ def user_page():
         else:
             st.success("No missing skills 🎉")
 
+
+        #=================Course Recommendation======================#
+
+        courses=get_recommended_courses(target_role)
+
+        with st.expander("📚 Recommended Courses & Certifications"):
+
+            if courses:
+                st.markdown("Here are some courses based on your selected job role ::")
+
+                for title,link in courses:
+                    st.write(f"-[{title}]({link})")
+            else:
+                st.info("No recommebdations fot this role yet.")
+        
+        #====================== calculation of resume score ====================#
+
         semantic_text = build_semantic_resume_text(
             raw_text=extracted_text,
             skills=resume_skills,
             experience_level=experience_level
         )
         resume_embedding = get_embedding(semantic_text)
+
+        add_resume_entry(embedding=resume_embedding,
+                         semantic_text=semantic_text,
+                         experience_level=experience_level,
+                         target_role=target_role,
+                         resume_score=resume_score,
+                         skills_present_count=len(present_skills),
+                         skills_missing_count=len(missing_skills),
+                         missing_skills=missing_skills,
+                         present_skills=present_skills
+                        )
+        
+        #finding out similar resumes (temporary in user screen)
+        
+        similar_resumes=find_similar_resumes(
+            current_embedding=resume_embedding,
+            top_k=3
+        )
+
+        if similar_resumes:
+            st.subheader("Similar Resumes in this session ")
+
+            for s in similar_resumes:
+                st.write(
+                    f"Resume ID {s['resume_id']} | "
+                    f"Role: {s['target_role']} | "
+                    f"Similarity: {round(s['similarity'] * 100, 2)}%"
+                )
 
         job_description = JOB_ROLE_DESCRIPTIONS.get(target_role, "")
 
