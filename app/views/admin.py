@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from backend.database.db import get_db
+
 ADMIN_PASSWORD = "admin123"   # change later if needed
 
 def admin_page():
@@ -31,8 +33,10 @@ def admin_page():
         st.stop()
 
     # -------- AUTHENTICATED ADMIN BELOW --------
-
-    data = st.session_state.get("admin_analytics", [])
+    
+    db=get_db()
+    analytics_col=db["analytics"]
+    data=list(analytics_col.find({},{"_id":0}))
 
     st.write("Total resumes analyzed:", len(data))
 

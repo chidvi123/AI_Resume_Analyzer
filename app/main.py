@@ -20,7 +20,7 @@ def main():
 
     page = st.sidebar.selectbox(
         "choose a page",
-        ["Home", "User", "Feedback", "Admin", "About"]
+        ["Home", "User", "Feedback", "Admin","JD Match & Optimization", "About"]
     )
 
     if page == "Home":
@@ -36,7 +36,7 @@ def main():
 
     elif page == "Admin":
         admin_page()
-
+        
     elif page == "About":
         st.title("About This Project")
         st.write("Information about the AI resume analyzer.")

@@ -1,4 +1,5 @@
 import streamlit as st
+import hashlib
 from datetime import datetime
 from backend.utils.helpers import save_uploaded_file, show_pdf
 from backend.parser.pdf_reader import extract_text_from_pdf
@@ -16,6 +17,8 @@ from backend.utils.sematic_text_builder import build_semantic_resume_text
 from backend.recommender.course_recommender import get_recommended_courses
 from backend.nlp.resume_registry import add_resume_entry
 from backend.nlp.resume_similarity import find_similar_resumes
+from backend.database.analytics import save_analytics_record
+from backend.database.user_data import save_resume,get_resume_by_hash
 
 # ================================
 # MODULE 1: USER RESUME ANALYSIS
@@ -23,12 +26,6 @@ from backend.nlp.resume_similarity import find_similar_resumes
 # ================================
 
 def user_page():
-
-    if "admin_analytics" not in st.session_state:
-        st.session_state["admin_analytics"] = []
-
-    if "analytics_saved" not in st.session_state:
-        st.session_state["analytics_saved"] = False
 
     st.title("User Dashboard..")
     st.write("Please upload your resume in PDF Format to begin analysis.")
@@ -40,7 +37,6 @@ def user_page():
         st.stop()
 
     st.success("Resume uploaded successfully..")
-    st.session_state["analytics_saved"] = False
 
     file_path = save_uploaded_file(uploaded_file)
     st.write("File saved at :", file_path)
@@ -188,7 +184,45 @@ def user_page():
             skills=resume_skills,
             experience_level=experience_level
         )
+
+        resume_hash=hashlib.sha256(
+            semantic_text.encode("utf-8")
+        ).hexdigest()
+
         resume_embedding = get_embedding(semantic_text)
+        #==============================================================#
+        #saving full resume analysis to DB (one resume per confirm click)
+        resume_record={
+            "resume_hash":resume_hash,
+            "raw_text":extracted_text,
+            "semantic_text":semantic_text,
+
+            "parsed_data":{
+                "name":parsed_data.get("name"),
+                "email":parsed_data.get("email"),
+                "phone":parsed_data.get("phone"),
+                "skills":resume_skills,
+            },
+
+            "experience_level":experience_level,
+            "resume_score":resume_score,
+            "score_breakdown":score_breakdown,
+
+            "skills_present":present_skills,
+            "skills_missing":missing_skills,
+            "embedding":resume_embedding.tolist(),
+        }
+        existing_resume=get_resume_by_hash(resume_hash)
+
+        if existing_resume:
+            resume_id = existing_resume["_id"]
+        else:
+            save_resume(resume_record)
+            existing_resume=get_resume_by_hash(resume_hash)
+            resume_id=existing_resume["_id"]
+
+
+        #===========================================================#
 
         add_resume_entry(embedding=resume_embedding,
                          semantic_text=semantic_text,
@@ -232,6 +266,7 @@ def user_page():
         st.write(f"{round(match_score * 100, 2)} %")
 
         analytics_record = {
+            "resume_id":resume_id,
             "timestamp": datetime.now(),
             "experience_level": experience_level,
             "resume_score": resume_score,
@@ -241,6 +276,5 @@ def user_page():
             "skills_missing_count": len(missing_skills)
         }
 
-        if not st.session_state["analytics_saved"]:
-            st.session_state["admin_analytics"].append(analytics_record)
-            st.session_state["analytics_saved"] = True
+        save_analytics_record(analytics_record)
+            
