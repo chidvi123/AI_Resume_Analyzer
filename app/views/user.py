@@ -266,7 +266,7 @@ def user_page():
         st.write(f"{round(match_score * 100, 2)} %")
 
         analytics_record = {
-            "resume_id":resume_id,
+            "resume_id":str(resume_id),
             "timestamp": datetime.now(),
             "experience_level": experience_level,
             "resume_score": resume_score,
