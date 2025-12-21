@@ -3,6 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from backend.database.db import get_db
+from backend.analysis.resume_similarities import get_top_k_similar_resumes
+from backend.analysis.resume_clustering import cluster_resumes
+from backend.database.user_data import save_cluster_assignments
 
 ADMIN_PASSWORD = "admin123"   # change later if needed
 
@@ -41,7 +44,11 @@ def admin_page():
     st.write("Total resumes analyzed:", len(data))
 
     if data:
-        st.dataframe(data)
+        df=pd.DataFrame(data)
+        for col in df.columns:
+            if col.endswith("_id") or col=="_id":
+                df[col]=df[col].astype(str)
+        st.dataframe(df)
 
         # summary metrics
         avg_score = sum(d["resume_score"] for d in data) / len(data)
@@ -63,6 +70,68 @@ def admin_page():
         st.write(experience_counts)
         st.write("Target Job Role Distribution")
         st.write(role_counts)
+
+        #---------------top k similar resumes ----------------        
+        st.subheader("Resume Similarity")
+
+        db=get_db()
+        resumes_col=db["resumes"]
+
+        resumes=list(
+            resumes_col.find({},{"_id":1,"parsed_data.name":1}
+                    )
+        )
+
+        if resumes:
+            resume_map={
+                str(r["_id"]):r["_id"] for r in resumes
+            }
+
+            selected_id_str=st.selectbox(
+                "Select a resume",
+                resume_map.keys()
+            )
+
+            selected_resume=resumes_col.find_one(
+                {"_id":resume_map[selected_id_str]}
+            )
+
+            if selected_resume:
+                top_k=get_top_k_similar_resumes(
+                    selected_resume["embedding"],
+                    k=5
+                )
+                if top_k:
+                    st.write("Top similar resumes :")
+                    for rid,score in top_k:
+                        st.write(f"- Resume {rid} -> {round(score,4)}")
+                else:
+                    st.info("No similar resume found.")
+        else:
+            st.info("No resumes available for similarity.")
+
+        #------------------Resume Clustering-----------------------#
+
+        st.subheader("Resume Clustering..")
+
+        k=st.number_input(
+            "Number of clusters (k)",
+            min_value=2,
+            max_value=20,
+            value=5,
+            step=1
+        )
+
+        if st.button("Run clustering"):
+            assignments,model=cluster_resumes(k=k)
+
+            if not assignments:
+                st.warning("Not enough resumes to perform clustering.")
+            else:
+                save_cluster_assignments(assignments)
+                st.success("Clustering completed and saved.")
+
+            st.write("assigns",assignments)
 
         # charts
         fig, ax = plt.subplots()

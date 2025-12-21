@@ -184,7 +184,11 @@ def user_page():
             skills=resume_skills,
             experience_level=experience_level
         )
-
+        
+        #hashing sematic text 
+        '''
+        not to store dupliacte resumes
+        '''
         resume_hash=hashlib.sha256(
             semantic_text.encode("utf-8")
         ).hexdigest()
@@ -266,7 +270,7 @@ def user_page():
         st.write(f"{round(match_score * 100, 2)} %")
 
         analytics_record = {
-            "resume_id":str(resume_id),
+            "resume_id":resume_id,
             "timestamp": datetime.now(),
             "experience_level": experience_level,
             "resume_score": resume_score,

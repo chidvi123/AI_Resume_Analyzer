@@ -1,3 +1,4 @@
+import numpy as np
 from backend.nlp.resume_registry import get_all_resume_entries
 from backend.nlp.similarity import cosine_similarity
 

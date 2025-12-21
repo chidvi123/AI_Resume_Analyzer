@@ -11,7 +11,7 @@ def cluster_resumes(n_clusters=3,random_state=42):
 
     k=min(n_clusters,len(embeddings))
 
-    kmeans=KMeans(n_clusters=k,random_state=randome_state,n_init=10)
+    kmeans=KMeans(n_clusters=k,random_state=random_state,n_init=10)
     labels=kmeans.fit_predict(embeddings)
 
     for record,label in zip(resumes,labels):
