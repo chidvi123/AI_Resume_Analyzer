@@ -1,3 +1,4 @@
+# DEPRECATED: replaced by DB-backed resumes collection
 import streamlit as st
 from datetime import datetime
 
