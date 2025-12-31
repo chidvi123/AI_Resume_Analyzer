@@ -8,6 +8,8 @@ if ROOT_DIR not in sys.path:
 
 from views.user import user_page
 from views.admin import admin_page
+from views.feedback import feedback_page
+from views.about import about_page
 
 st.set_page_config(
     page_title="AI Resume Analyzer",
@@ -20,7 +22,7 @@ def main():
 
     page = st.sidebar.selectbox(
         "choose a page",
-        ["Home", "User", "Feedback", "Admin","JD Match & Optimization", "About"]
+        ["Home", "User", "Feedback", "Admin","About"]
     )
 
     if page == "Home":
@@ -31,15 +33,13 @@ def main():
         user_page()
 
     elif page == "Feedback":
-        st.title("Feedback Section")
-        st.write("User can submit feedback here")
+       feedback_page()
 
     elif page == "Admin":
         admin_page()
         
     elif page == "About":
-        st.title("About This Project")
-        st.write("Information about the AI resume analyzer.")
+        about_page()
 
 if __name__ == "__main__":
     main()

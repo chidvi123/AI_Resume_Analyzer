@@ -13,6 +13,7 @@ from backend.analysis.admin_insights import (
     get_rolewise_job_match,
     get_cluster_insights,
 )
+from backend.database.feedback import get_feedback_rating_stars
 
 ADMIN_PASSWORD = "admin123"   # change later if needed
 
@@ -81,6 +82,34 @@ def admin_page():
     st.write(experience_counts)
     st.write("Target Job Role Distribution")
     st.write(role_counts)
+
+    # ================= FEEDBACK ANALYTICS =================
+    st.subheader("User Feedback Analytics")
+    avg_rating,rating_counts=get_feedback_rating_stars()
+
+    if avg_rating==0.0:
+        st.info("No feedback ratings available yet.")
+    else:
+        st.write(f"**Average User Rating:**  {avg_rating} / 5")
+
+        labels=[]
+        sizes=[]
+
+        for rating in sorted(rating_counts.keys()):
+            labels.append(f"{rating}")
+            sizes.append(rating_counts[rating])
+
+        fig,ax = plt.subplots()
+        ax.pie(
+            sizes,
+            labels=labels,
+            autopct="%1.1f%%",
+            startangle=90
+        )
+
+        ax.set_title("Feedback Rating Distribution")
+
+        st.pyplot(fig)
 
     # ================= ADMIN INSIGHTS (NON-CLUSTER) =================
 
