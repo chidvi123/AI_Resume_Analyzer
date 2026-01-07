@@ -51,19 +51,24 @@ def extract_skills(text: str, skills_file="data/skills.json"):
     # Normalize resume text ONLY for matching safety
     text_lower = text.lower()
     text_lower = re.sub(r"[^\w\s]", " ", text_lower)   # remove punctuation
+    text_lower = re.sub(r"[\u00a0]", " ", text_lower)
     text_lower = re.sub(r"\s+", " ", text_lower)      # collapse spaces
-    text_spaced = f" {text_lower} "
-
+    #text_spaced = f" {text_lower} "
+    
     found = set()
 
     for skill in skills_list:
-        skill_l = skill.lower().strip()
+        skill_l = re.sub(r"[^\w\s]", " ", skill.lower()).strip()
 
         # ignore invalid / garbage skills
         if len(skill_l) < 2:
             continue
 
-        if f" {skill_l} " in text_spaced:
+        pattern = r"\b" + r"\s+".join(map(re.escape, skill_l.split())) + r"\b"
+
+
+
+        if re.search(pattern, text_lower):
             found.add(skill_l)
 
     return sorted(found)

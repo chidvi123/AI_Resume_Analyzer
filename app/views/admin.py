@@ -15,17 +15,21 @@ from backend.analysis.admin_insights import (
 )
 from backend.database.feedback import get_feedback_rating_stars
 
-ADMIN_PASSWORD = "admin123"   # change later if needed
+ADMIN_PASSWORD = "admin123"
 
 
 def admin_page():
-    st.title("Admin Dashboard")
 
-    # session flag for admin auth
+    # ===================== HEADER =====================
+    st.title("Admin Dashboard")
+    st.caption("System analytics, trends, and internal insights")
+
+    st.divider()
+
+    # ===================== AUTH =====================
     if "admin_authenticated" not in st.session_state:
         st.session_state["admin_authenticated"] = False
 
-    # -------- LOGIN BLOCK --------
     if not st.session_state["admin_authenticated"]:
         password = st.text_input("Enter Admin Password", type="password")
 
@@ -43,213 +47,221 @@ def admin_page():
         st.success("Logged out")
         st.stop()
 
-    # -------- AUTHENTICATED ADMIN BELOW --------
-
+    # ===================== LOAD DATA =====================
     db = get_db()
     analytics_col = db["analytics"]
     data = list(analytics_col.find({}, {"_id": 0}))
-
-    st.write("Total resumes analyzed:", len(data))
 
     if not data:
         st.info("No analytics data available yet.")
         return
 
     df = pd.DataFrame(data)
+
+    # --- Convert ObjectId columns ONLY ---
     for col in df.columns:
-        if col.endswith("_id") or col == "_id":
+        if df[col].apply(lambda x: str(type(x))).str.contains("ObjectId").any():
             df[col] = df[col].astype(str)
 
-    st.dataframe(df)
+    # --- Ensure numeric safety ---
+    df["resume_score"] = pd.to_numeric(df["resume_score"], errors="coerce")
+    df["job_match_score"] = pd.to_numeric(df["job_match_score"], errors="coerce")
 
-    # -------- SUMMARY METRICS --------
-    avg_score = sum(d["resume_score"] for d in data) / len(data)
+    # ===================== OVERVIEW METRICS =====================
+    st.subheader("📊 System Overview")
 
-    experience_counts = {}
-    role_counts = {}
+    col1, col2, col3 = st.columns(3)
 
-    for d in data:
-        experience_counts[d["experience_level"]] = (
-            experience_counts.get(d["experience_level"], 0) + 1
-        )
-        role_counts[d["target_role"]] = (
-            role_counts.get(d["target_role"], 0) + 1
-        )
+    with col1:
+        st.metric("Total Resumes", len(df))
 
-    st.subheader("Summary Metrics")
-    st.write(f"Average Resume Score: {round(avg_score, 2)}")
-    st.write("Experience Level Distribution")
-    st.write(experience_counts)
-    st.write("Target Job Role Distribution")
-    st.write(role_counts)
+    with col2:
+        st.metric("Average Resume Score", round(df["resume_score"].mean(), 2))
 
-    # ================= FEEDBACK ANALYTICS =================
-    st.subheader("User Feedback Analytics")
-    avg_rating,rating_counts=get_feedback_rating_stars()
+    with col3:
+        st.metric("Unique Job Roles", df["target_role"].nunique())
 
-    if avg_rating==0.0:
+    st.divider()
+
+    # ===================== FEEDBACK ANALYTICS =====================
+    st.subheader("⭐ User Feedback Analytics")
+
+    avg_rating, rating_counts = get_feedback_rating_stars()
+
+    if avg_rating == 0.0:
         st.info("No feedback ratings available yet.")
     else:
-        st.write(f"**Average User Rating:**  {avg_rating} / 5")
+        st.metric("Average Rating", f"{avg_rating} / 5")
 
-        labels=[]
-        sizes=[]
+        labels = list(map(str, sorted(rating_counts.keys())))
+        sizes = [rating_counts[r] for r in sorted(rating_counts.keys())]
 
-        for rating in sorted(rating_counts.keys()):
-            labels.append(f"{rating}")
-            sizes.append(rating_counts[rating])
-
-        fig,ax = plt.subplots()
-        ax.pie(
-            sizes,
-            labels=labels,
-            autopct="%1.1f%%",
-            startangle=90
-        )
-
+        fig, ax = plt.subplots()
+        ax.pie(sizes, labels=labels, autopct="%1.1f%%", startangle=90)
         ax.set_title("Feedback Rating Distribution")
-
         st.pyplot(fig)
 
-    # ================= ADMIN INSIGHTS (NON-CLUSTER) =================
+    st.divider()
 
-    st.subheader("📊 Admin Insights")
+    # ===================== ADMIN INSIGHTS =====================
+    st.subheader("📊 Admin Insights (Trends & Patterns)")
 
-    # Global Missing Skills
+    # -------- Global Missing Skills --------
     st.markdown("### 🔧 Most Missing Skills (Overall)")
     global_missing = get_global_missing_skills()
+
     if global_missing:
-        st.write(
-            dict(sorted(global_missing.items(), key=lambda x: x[1], reverse=True)[:10])
+        gm_df = pd.DataFrame(
+            sorted(global_missing.items(), key=lambda x: x[1], reverse=True)[:7],
+            columns=["Skill", "Missing Count"]
         )
+        st.dataframe(gm_df, width="stretch")
     else:
         st.info("No missing skill data available.")
 
-    # Role-wise Missing Skills
+    # -------- Role-wise Missing Skills --------
     st.markdown("### 🎯 Missing Skills by Role")
     rolewise_missing = get_rolewise_missing_skills()
+
     if rolewise_missing:
+        rows = []
         for role, skills in rolewise_missing.items():
-            st.write(
-                f"**{role}** → "
-                f"{dict(sorted(skills.items(), key=lambda x: x[1], reverse=True)[:5])}"
-            )
+            for skill, count in skills.items():
+                rows.append([role, skill, count])
+
+        rm_df = pd.DataFrame(rows, columns=["Role", "Skill", "Missing Count"])
+        rm_df = rm_df.sort_values("Missing Count", ascending=False)
+
+        st.dataframe(rm_df, width="stretch")
     else:
         st.info("No role-wise missing skill data.")
 
-    # Experience vs Resume Score
+    # -------- Experience vs Resume Score --------
     st.markdown("### 📈 Experience Level vs Avg Resume Score")
     exp_vs_score = get_experience_vs_score()
+
     if exp_vs_score:
-        st.write(exp_vs_score)
+        evs_df = pd.DataFrame(
+            exp_vs_score.items(),
+            columns=["Experience Level", "Average Resume Score"]
+        )
+        st.dataframe(evs_df, width="stretch")
     else:
         st.info("No experience-score analytics found.")
 
-    # Role-wise Job Match Score
+    # -------- Role-wise Job Match --------
     st.markdown("### 🧩 Role-wise Avg Job Match Score (%)")
     role_match = get_rolewise_job_match()
+
     if role_match:
-        st.write(role_match)
+        rm_df = pd.DataFrame(
+            role_match.items(),
+            columns=["Role", "Average Job Match Score"]
+        )
+        st.dataframe(rm_df, width="stretch")
     else:
         st.info("No job-match analytics found.")
 
-    # ================= RESUME SIMILARITY =================
+    st.divider()
 
-    st.subheader("Resume Similarity")
+    # ===================== DISTRIBUTIONS =====================
+    st.subheader("📈 Distributions")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        exp_counts = df["experience_level"].value_counts()
+        fig, ax = plt.subplots()
+        ax.bar(exp_counts.index, exp_counts.values)
+        ax.set_title("Experience Level Distribution")
+        st.pyplot(fig)
+
+    with col2:
+        role_counts = df["target_role"].value_counts()
+        fig, ax = plt.subplots()
+        ax.pie(role_counts.values, labels=role_counts.index, autopct="%1.1f%%")
+        ax.set_title("Target Job Role Distribution")
+        st.pyplot(fig)
+
+    st.divider()
+
+    # ===================== SCORE DISTRIBUTION =====================
+    st.subheader("📉 Resume Score Distribution")
+
+    fig, ax = plt.subplots()
+    ax.hist(df["resume_score"].dropna(), bins=10)
+    ax.set_xlabel("Score")
+    ax.set_ylabel("Count")
+    st.pyplot(fig)
+
+    st.divider()
+
+    # ===================== RESUME SIMILARITY =====================
+    st.subheader("🔍 Resume Similarity")
 
     resumes_col = db["resumes"]
-    resumes = list(resumes_col.find({}, {"_id": 1, "parsed_data.name": 1}))
+    resumes = list(resumes_col.find({}, {"_id": 1}))
 
     if resumes:
         resume_map = {str(r["_id"]): r["_id"] for r in resumes}
 
-        selected_id_str = st.selectbox(
-            "Select a resume",
-            resume_map.keys()
-        )
-
-        selected_resume = resumes_col.find_one(
-            {"_id": resume_map[selected_id_str]}
-        )
+        selected_id = st.selectbox("Select Resume ID", resume_map.keys())
+        selected_resume = resumes_col.find_one({"_id": resume_map[selected_id]})
 
         if selected_resume:
             top_k = get_top_k_similar_resumes(
                 selected_resume["embedding"],
                 k=5
             )
+
             if top_k:
-                st.write("Top similar resumes:")
-                for rid, score in top_k:
-                    st.write(f"- Resume {rid} → {round(score, 4)}")
+                sim_df = pd.DataFrame(
+                    [(str(rid), round(score * 100, 2)) for rid, score in top_k],
+                    columns=["Resume ID", "Similarity %"]
+                )
+                st.dataframe(sim_df, width="stretch")
             else:
-                st.info("No similar resume found.")
+                st.info("No similar resumes found.")
     else:
-        st.info("No resumes available for similarity.")
+        st.info("No resumes available.")
 
-    # ================= RESUME CLUSTERING =================
+    st.divider()
 
-    st.subheader("Resume Clustering")
+    # ===================== CLUSTERING =====================
+    st.subheader("🧩 Resume Clustering")
 
-    k = st.number_input(
-        "Number of clusters (k)",
-        min_value=2,
-        max_value=20,
-        value=5,
-        step=1
-    )
+    k = st.number_input("Number of clusters (k)", min_value=2, max_value=20, value=5)
 
-    if st.button("Run clustering"):
-        assignments, model = cluster_resumes(k=k)
+    if st.button("Run Clustering"):
+        assignments, _ = cluster_resumes(k=k)
 
         if not assignments:
             st.warning("Not enough resumes to perform clustering.")
         else:
             save_cluster_assignments(assignments)
-            st.success("Clustering completed and saved.")
+            st.success("Clustering completed successfully.")
 
-        st.write("Assignments:", assignments)
-
-    # ================= CLUSTER INSIGHTS =================
-
+    # ===================== CLUSTER INSIGHTS =====================
     st.subheader("🧠 Cluster Insights")
 
     cluster_insights = get_cluster_insights()
     if cluster_insights:
         for cid, info in cluster_insights.items():
-            st.write(f"**Cluster {cid}**")
+            st.markdown(f"**Cluster {cid}**")
             st.write(info)
     else:
         st.info("Run clustering to see cluster insights.")
 
-    # ================= CHARTS =================
+    st.divider()
 
-    fig, ax = plt.subplots()
-    ax.bar(experience_counts.keys(), experience_counts.values())
-    ax.set_title("Experience Level Distribution")
-    st.pyplot(fig)
+    # ===================== RAW DATA =====================
+    with st.expander("📄 View / Export Raw Analytics Data"):
+        st.dataframe(df, width="stretch")
 
-    fig, ax = plt.subplots()
-    ax.pie(
-        role_counts.values(),
-        labels=role_counts.keys(),
-        autopct="%1.1f%%"
-    )
-    ax.set_title("Target Job Role Distribution")
-    st.pyplot(fig)
-
-    scores = [d["resume_score"] for d in data]
-    fig, ax = plt.subplots()
-    ax.hist(scores, bins=10)
-    ax.set_title("Resume Score Distribution")
-    st.pyplot(fig)
-
-    # ================= CSV EXPORT =================
-
-    csv = df.to_csv(index=False)
-
-    st.download_button(
-        label="Download Analytics CSV",
-        data=csv,
-        file_name="admin_analytics.csv",
-        mime="text/csv"
-    )
+        csv = df.to_csv(index=False)
+        st.download_button(
+            "Download Analytics CSV",
+            csv,
+            "admin_analytics.csv",
+            "text/csv"
+        )

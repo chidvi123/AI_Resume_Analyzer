@@ -1,10 +1,11 @@
 from collections import Counter
 from backend.nlp.resume_registry import get_all_resume_entries
+from backend.utils.normalizer import normalize_skills
 
 def analyze_skill_gap(resume_skills, required_skills):
 
-    resume_set = set(resume_skills)
-    required_set = set(required_skills)
+    resume_set = set(normalize_skills(resume_skills))
+    required_set = set(normalize_skills(required_skills))
 
     present_skills = sorted(list(resume_set & required_set))
     missing_skills = sorted(list(required_set - resume_set))

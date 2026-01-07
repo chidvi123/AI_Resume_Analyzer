@@ -20,5 +20,6 @@
     "NumPy",
     "Power BI",
     "Excel",
-    "Scikit-learn"
+    "Scikit-learn",
+    "matplotlib"
 ]
