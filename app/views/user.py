@@ -13,7 +13,11 @@ from backend.utils.sematic_text_builder import build_semantic_resume_text
 from backend.utils.job_roles import JOB_ROLE_DESCRIPTIONS
 from backend.nlp.embeddings import get_embedding
 from backend.nlp.similarity import cosine_similarity
-from backend.recommender.course_recommender import get_recommended_courses
+from backend.recommender.course_recommender import (
+    get_recommended_courses,
+    resume_videos,
+    interview_videos
+    )
 from backend.database.analytics import save_analytics_record
 from backend.database.user_data import save_resume, get_resume_by_hash
 
@@ -142,7 +146,7 @@ def user_page():
     st.metric("Match Percentage", f"{round(match_score * 100, 1)}%")
 
     st.divider()
-
+    st.subheader("🎥Learning Resources")
     # ===================== COURSES =====================
     with st.expander("📚 Recommended Courses & Certifications"):
         courses = get_recommended_courses(target_role)
@@ -182,6 +186,27 @@ def user_page():
         "skills_missing_count": len(missing_skills)
     })
 
-    # ===================== TRANSPARENCY =====================
+    '''# ===================== TRANSPARENCY =====================
     with st.expander("🔍 View extracted resume text"):
-        st.write(extracted_text)
+        st.write(extracted_text)'''
+
+    #========================Learning Resources===================#
+    # ===================== LEARNING RESOURCES =====================
+    with st.expander("📄 Resume Building & Improvement Videos"):
+        st.caption("Improve resume structure, wording, and ATS optimization")
+
+        cols = st.columns(3)
+        for i, video_url in enumerate(resume_videos):
+            with cols[i % 3]:
+                st.video(video_url)
+
+    with st.expander("💼 Interview Preparation Videos"):
+        st.caption("Common interview questions, behavioral tips, and technical prep")
+
+        cols = st.columns(3)
+        for i, video_url in enumerate(interview_videos):
+            with cols[i % 3]:
+                st.video(video_url)
+
+
+    
