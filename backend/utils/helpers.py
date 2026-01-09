@@ -4,7 +4,7 @@ import streamlit as st
 
 def save_uploaded_file(uploaded_file,save_dir="Uploaded_Resumes"):
     if not os.path.exists(save_dir):
-        os.nakedirs(save_dir)
+        os.makedirs(save_dir)
 
     file_path=os.path.join(save_dir,uploaded_file.name)
 
