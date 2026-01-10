@@ -9,8 +9,6 @@ AI Resume Analyzer is a production-ready Streamlit application that analyzes res
 
 ## Key Features
 
-## Key Features
-
 ### User Features
 - Upload resumes in PDF format with in-app preview
 - Automatic resume text extraction using PDF parsing
@@ -65,6 +63,8 @@ This architecture ensures maintainability, explainability, and scalability while
 - **Environment Management**: Python environment variables  
 
 ## Project Structure
+<details>
+<summary>Click to expand project structure</summary>
 
 ```text
 ai_resume_analyzer/
@@ -118,4 +118,66 @@ ai_resume_analyzer/
 ├── README.md
 ├── requirements.txt
 └── .gitignore
+</details>
+```
 
+
+## Data Model Overview
+
+The system uses a clear separation between core entities and event-based analytics to ensure data integrity, scalability, and meaningful insights.
+
+### Resume (Entity)
+- Each resume is stored **once** as a unique entity.
+- Duplicate resumes are detected using a semantic hash generated from normalized resume text.
+- Resume records store:
+  - Parsed resume data
+  - Semantic embedding
+  - Cluster identifier (admin analytics)
+- This prevents redundant storage and enables reuse across analytics and intelligence layers.
+
+### Analytics (Events)
+- Analytics are stored as **event-based records**.
+- Each resume analysis generates a new analytics event linked via `resume_id`.
+- Analytics records include:
+  - Experience level
+  - Resume score
+  - Target role
+  - Job match score
+  - Skill presence and gaps
+  - Timestamp
+- This design supports historical tracking and trend analysis without duplicating resume data.
+
+This entity–event separation allows the system to scale analytics independently while keeping resume intelligence centralized and consistent.
+
+### Installation Steps
+
+1. Clone the repository
+
+   ```bash
+   git clone https://github.com/your-username/AI_Resume_Analyzer.git
+   cd AI_Resume_Analyzer
+Create and activate a virtual environment
+
+bash
+Copy code
+python -m venv venv
+source venv/Scripts/activate   # Windows
+Install dependencies
+
+bash
+Copy code
+pip install -r requirements.txt
+Configure environment variables
+
+Create a .env file in the project root:
+
+env
+Copy code
+MONGODB_URI=mongodb://localhost:27017/ai_resume_analyzer
+Run the application
+
+bash
+Copy code
+streamlit run app/main.py
+yaml
+Copy code
