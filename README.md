@@ -20,6 +20,11 @@ AI Resume Analyzer is a production-ready Streamlit application that analyzes res
 - Curated course and interview preparation recommendations
 - Duplicate resume detection using semantic hashing
 - Resume analysis persisted for analytics
+- User feedback submission with rating and comments
+- Feedback data persisted in MongoDB for admin analysis
+- About page with contact message submission
+- Contact messages stored in MongoDB for review
+
 
 ### Admin Features
 - Secure admin access with session-based authentication
@@ -186,3 +191,15 @@ This entity–event separation allows the system to scale analytics independentl
 - Cluster-level insights to identify common strengths and gaps across resumes.
 - Advanced admin visualizations for long-term trend analysis.
 - Optional resume feedback export for users.
+
+### Preview
+
+#### Home Page (Part 1)
+<p align="center">
+  <img src="docs/screenshots/home-1.png" width="900">
+</p>
+
+#### Home Page (Part 2)
+<p align="center">
+  <img src="docs/screenshots/home-2.png" width="900">
+</p>
