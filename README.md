@@ -206,7 +206,7 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/preview.png" width="900">
 </p>
 
-## Resume Summary, Score and its Breakdown & Target Role Selection
+## Resume Summary, Score, and Breakdown with Target Role Selection
 
 <p align="center">
   <img src="docs/screenshots/resume_target_job_role.png" width="900">
@@ -237,3 +237,68 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/recom2.png" width="45%">
   <img src="docs/screenshots/recom3.png" width="45%">
 </p>
+
+
+### Admin Page & Insights
+
+## Admin Login (Password Required)
+<p align="center">
+  <img src="docs/screenshots/admin_password_inf.png" width="45%">
+  <img src="docs/screenshots/incorrect_paddword.png.png" width="45%">
+</p>
+
+## Admin Dashboard Overview
+<p align="center">
+  <img src="docs/screenshots/system_overview.png" width="900">
+</p>
+
+## User Ratings and Rating Distribution
+
+<p align="center">
+  <img src="docs/screenshots/rating_chart.png" width="900">
+</p>
+
+## Missing Skills (Overall and Role-wise)
+
+<p align="center">
+  <img src="docs/screenshots/admin_insights.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/ingights.png" width="900">
+</p>
+
+## Resume and Role Distributions
+<p align="center">
+  <img src="docs/screenshots/distributions1.png" width="900">
+  <img src="docs/screenshots/distribution2.png" width="900">
+</p>
+
+## Resume Similarity Analysis
+<p align="center">
+  <img src="docs/screenshots/resume_similarity.png" width="900">
+</p>
+
+## RResume Clustering Based on Admin-Selected Number of Clusters
+<p align="center">
+  <img src="docs/screenshots/clustering1.png" width="900">
+  <img src="docs/screenshots/clustering2.png" width="900">
+</p>
+
+## Download Analytics Data
+<p align="center">
+  <img src="docs/screenshots/download_analytics.png" width="900">
+</p>
+
+
+
+
+
+
+
+
+
+
+
+
+

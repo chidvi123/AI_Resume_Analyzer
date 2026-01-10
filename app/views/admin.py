@@ -91,17 +91,37 @@ def admin_page():
     if avg_rating == 0.0:
         st.info("No feedback ratings available yet.")
     else:
-        st.metric("Average Rating", f"{avg_rating} / 5")
+        col1, col2 = st.columns([1, 2])
 
-        labels = list(map(str, sorted(rating_counts.keys())))
-        sizes = [rating_counts[r] for r in sorted(rating_counts.keys())]
+        with col1:
+            st.metric("Average Rating", f"{avg_rating} / 5")
 
-        fig, ax = plt.subplots()
-        ax.pie(sizes, labels=labels, autopct="%1.1f%%", startangle=90)
-        ax.set_title("Feedback Rating Distribution")
-        st.pyplot(fig)
+        with col2:
+            labels = list(map(str, sorted(rating_counts.keys())))
+            sizes = [rating_counts[r] for r in sorted(rating_counts.keys())]
 
-    st.divider()
+            fig, ax = plt.subplots(
+                figsize=(3, 3),   
+                dpi=90            
+            )
+
+            ax.pie(
+                sizes,
+                labels=labels,
+                autopct="%1.0f%%",
+                startangle=90,
+                textprops={"fontsize": 9}  
+            )
+
+            ax.set_title(
+                "Rating Distribution",
+                fontsize=10
+            )
+
+            plt.tight_layout()
+
+            st.pyplot(fig, width="content") 
+
 
     # ===================== ADMIN INSIGHTS =====================
     st.subheader("📊 Admin Insights (Trends & Patterns)")
@@ -188,13 +208,27 @@ def admin_page():
     # ===================== SCORE DISTRIBUTION =====================
     st.subheader("📉 Resume Score Distribution")
 
-    fig, ax = plt.subplots()
-    ax.hist(df["resume_score"].dropna(), bins=10)
-    ax.set_xlabel("Score")
-    ax.set_ylabel("Count")
-    st.pyplot(fig)
+    fig, ax = plt.subplots(
+        figsize=(4, 2.5),   # 👈 controls size
+        dpi=100
+    )
+
+    ax.hist(
+        df["resume_score"].dropna(),
+        bins=10,
+        edgecolor="white"
+    )
+
+    ax.set_xlabel("Score", fontsize=9)
+    ax.set_ylabel("Count", fontsize=9)
+    ax.set_title("Resume Score Distribution", fontsize=10)
+
+    plt.tight_layout()
+
+    st.pyplot(fig, width="content")
 
     st.divider()
+
 
     # ===================== RESUME SIMILARITY =====================
     st.subheader("🔍 Resume Similarity")
