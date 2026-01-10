@@ -118,6 +118,7 @@ ai_resume_analyzer/
 ├── README.md
 ├── requirements.txt
 └── .gitignore
+```
 </details>
 
 
