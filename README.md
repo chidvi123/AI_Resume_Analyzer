@@ -289,6 +289,25 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/download_analytics.png" width="900">
 </p>
 
+### Feedback Page
+
+<p align="center">
+  <img src="docs/screenshots/feedback1.png" width="900">
+  <img src="docs/screenshots/feedback2.png" width="900">
+</p>
+
+
+###  About and Contact Page
+
+<p align="center">
+  <img src="docs/screenshots/contact.png" width="900">
+</p>
+
+
+
+
+
+
 
 
 
