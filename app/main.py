@@ -18,20 +18,26 @@ st.set_page_config(
     layout="wide"
 )
 
-# ================= GLOBAL CSS (ADD HERE) =================
+# ================= GLOBAL CSS =================
 st.markdown(
     """
     <style>
 
     /* ===== MAIN BACKGROUND ===== */
     .stApp {
-        background-color: #0f172a;  /* deep dark blue-black */
+        background-color: #0f172a;
+    }
+
+    /* ===== TOP HEADER FIX (IMPORTANT) ===== */
+    header[data-testid="stHeader"] {
+        background-color: #0f172a;
+        border-bottom: 1px solid #1f2937;
     }
 
     /* ===== PAGE WIDTH ===== */
     .block-container {
         padding-top: 2rem;
-        max-width: 1200px;
+        max-width: 100%;
     }
 
     /* ===== HEADINGS ===== */
@@ -53,26 +59,25 @@ st.markdown(
 
     /* ===== CARDS ===== */
     .card {
-        background-color: #111827;   /* dark card */
+        background-color: #111827;
         padding: 1.6rem;
         border-radius: 16px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         border: 1px solid #1f2937;
-        
-        height:220px;
-        display:flex;
-        flex-direction:column;
-        justify-content:space-between;
+
+        height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .card-auto {
-    background-color: #111827;
-    padding: 1.6rem;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    border: 1px solid #1f2937;
-
-    height: auto;
+        background-color: #111827;
+        padding: 1.6rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        border: 1px solid #1f2937;
+        height: auto;
     }
 
     /* ===== CTA ===== */
@@ -97,10 +102,16 @@ st.markdown(
         color: #e5e7eb;
     }
 
+    /* ===== DIVIDER ===== */
+    hr {
+        border-color: rgba(255,255,255,0.1);
+    }
+
     </style>
     """,
     unsafe_allow_html=True
 )
+
 
 # =========================================================
 

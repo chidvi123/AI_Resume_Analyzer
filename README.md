@@ -194,12 +194,8 @@ This entity–event separation allows the system to scale analytics independentl
 
 ### Preview
 
-#### Home Page (Part 1)
+#### Home Page
 <p align="center">
   <img src="docs/screenshots/home1.png" width="900">
-</p>
-
-#### Home Page (Part 2)
-<p align="center">
   <img src="docs/screenshots/home2.png" width="900">
 </p>
