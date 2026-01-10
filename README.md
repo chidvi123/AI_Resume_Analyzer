@@ -156,3 +156,9 @@ This entity–event separation allows the system to scale analytics independentl
    ```bash
    git clone https://github.com/your-username/AI_Resume_Analyzer.git
    cd AI_Resume_Analyzer
+2. Create and activate a virtual environment:
+  ```bash
+  python -m venv venv
+  source venv/Scripts/activate   # Windows
+
+
