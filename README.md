@@ -169,3 +169,20 @@ This entity–event separation allows the system to scale analytics independentl
     ```bash
     steamlit run app/main.py
 
+
+## Current Status
+
+- Core user-facing resume analysis is complete and feature-locked.
+- Admin analytics, resume similarity, and clustering are fully implemented and stable.
+- Resume data is deduplicated and persisted in MongoDB.
+- Analytics are stored as event-based records for historical insights.
+- The application is deployment-ready and compatible with Streamlit Cloud.
+
+
+## Future Scope
+
+- MongoDB Atlas integration for cloud deployment.
+- Job Description (JD) analysis and resume–JD comparison.
+- Cluster-level insights to identify common strengths and gaps across resumes.
+- Advanced admin visualizations for long-term trend analysis.
+- Optional resume feedback export for users.
