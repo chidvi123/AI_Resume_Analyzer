@@ -199,3 +199,41 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/home1.png" width="900">
   <img src="docs/screenshots/home2.png" width="900">
 </p>
+
+### User Page
+<p align="center">
+  <img src="docs/screenshots/navbar_and_user_inf.png" width="900">
+  <img src="docs/screenshots/preview.png" width="900">
+</p>
+
+## Resume Summary, Score and its Breakdown & Target Role Selection
+
+<p align="center">
+  <img src="docs/screenshots/resume_target_job_role.png" width="900">
+  <img src="docs/screenshots/preview.png" width="900">
+</p>
+
+## Skill Gap Analysis & Job Match Score
+
+<p align="center">
+  <img src="docs/screenshots/skill_gap_resume_score.png" width="900">
+</p>
+
+
+## Skill Development & Career Support
+
+<p align="center">
+  <img src="docs/screenshots/recomendations.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/recom1.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/recom2.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/recom3.png" width="900">
+</p>

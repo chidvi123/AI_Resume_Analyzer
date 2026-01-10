@@ -151,7 +151,7 @@ def user_page():
     with st.expander("📚 Recommended Courses & Certifications"):
         courses = get_recommended_courses(target_role)
         if courses:
-            for title, link in courses:
+            for title, link in courses[:5]:
                 st.write(f"- [{title}]({link})")
         else:
             st.info("No recommendations available for this role yet.")
@@ -190,22 +190,22 @@ def user_page():
     with st.expander("🔍 View extracted resume text"):
         st.write(extracted_text)'''
 
-    #========================Learning Resources===================#
+    
     # ===================== LEARNING RESOURCES =====================
     with st.expander("📄 Resume Building & Improvement Videos"):
         st.caption("Improve resume structure, wording, and ATS optimization")
 
-        cols = st.columns(3)
+        cols = st.columns(5)
         for i, video_url in enumerate(resume_videos):
-            with cols[i % 3]:
+            with cols[i % 5]:
                 st.video(video_url)
 
     with st.expander("💼 Interview Preparation Videos"):
         st.caption("Common interview questions, behavioral tips, and technical prep")
 
-        cols = st.columns(3)
+        cols = st.columns(5)
         for i, video_url in enumerate(interview_videos):
-            with cols[i % 3]:
+            with cols[i % 5]:
                 st.video(video_url)
 
 
