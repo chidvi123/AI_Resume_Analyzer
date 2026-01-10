@@ -5,6 +5,10 @@ and classify experience levels as **Fresher**, **Intermediate**, or **Experience
 
 ---
 
+<h1 align="center" id="title">Resume-Analyzer</h1>
+
+<p align="center"><img src="https://socialify.git.ci/chidvi123/AI_Resume_Analyzer/image?language=1&amp;name=1&amp;owner=1&amp;theme=Dark" alt="project-image"></p>
+
 ## 📁 Project Structure
 
 ```text
