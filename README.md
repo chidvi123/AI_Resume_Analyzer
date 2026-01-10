@@ -124,6 +124,8 @@ ai_resume_analyzer/
 
 ## Data Model Overview
 
+<details>
+<summary>Model overview</summary>
 The system uses a clear separation between core entities and event-based analytics to ensure data integrity, scalability, and meaningful insights.
 
 ### Resume (Entity)
@@ -148,6 +150,7 @@ The system uses a clear separation between core entities and event-based analyti
 - This design supports historical tracking and trend analysis without duplicating resume data.
 
 This entity–event separation allows the system to scale analytics independently while keeping resume intelligence centralized and consistent.
+</details>
 
 ### Installation Steps
 
