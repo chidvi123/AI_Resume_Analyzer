@@ -5,7 +5,7 @@
 <p align="center">
   <a href="#project-structure">Project Structure</a> •
   <a href="#preview">Preview</a> •
-  <a href="#Contact">Author</a>
+  <a href="#Author">Contact</a>
 </p>
 
 
