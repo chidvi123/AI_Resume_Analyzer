@@ -210,7 +210,6 @@ This entity–event separation allows the system to scale analytics independentl
 
 <p align="center">
   <img src="docs/screenshots/resume_target_job_role.png" width="900">
-  <img src="docs/screenshots/preview.png" width="900">
 </p>
 
 ## Skill Gap Analysis & Job Match Score
@@ -244,7 +243,7 @@ This entity–event separation allows the system to scale analytics independentl
 ## Admin Login (Password Required)
 <p align="center">
   <img src="docs/screenshots/admin_password_inf.png" width="45%">
-  <img src="docs/screenshots/incorrect_paddword.png.png" width="45%">
+  <img src="docs/screenshots/incorrect_paddword.png" width="45%">
 </p>
 
 ## Admin Dashboard Overview
@@ -279,7 +278,7 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/resume_similarity.png" width="900">
 </p>
 
-## RResume Clustering Based on Admin-Selected Number of Clusters
+## Resume Clustering Based on Admin-Selected Number of Clusters
 <p align="center">
   <img src="docs/screenshots/clustering1.png" width="900">
   <img src="docs/screenshots/clustering2.png" width="900">
