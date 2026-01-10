@@ -48,9 +48,6 @@ The application follows a strict modular architecture with a clear separation be
 - **Intelligence Layer**  
   Lightweight NLP techniques are used for semantic similarity, resume deduplication, and clustering. Sentence embeddings are stored in the database to support similarity search and admin-only clustering workflows.
 
-This architecture ensures maintainability, explainability, and scalability while keeping the system simple and production-oriented.
-
-
 ## Technology Stack
 
 - **Frontend**: Streamlit  
