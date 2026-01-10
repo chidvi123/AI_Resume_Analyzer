@@ -2,6 +2,12 @@
 
 <p align="center"><img src="https://socialify.git.ci/chidvi123/AI_Resume_Analyzer/image?language=1&amp;name=1&amp;owner=1&amp;theme=Dark" alt="project-image"></p>
 
+<p align="center">
+  <a href="#project-structure">Project Structure</a> •
+  <a href="#preview">Preview</a> •
+  <a href="#Contact">Author</a>
+</p>
+
 
 ### AI Resume Analyzer
 
@@ -64,7 +70,8 @@ The application follows a strict modular architecture with a clear separation be
 - **Visualization**: Streamlit charts  
 - **Environment Management**: Python environment variables  
 
-## Project Structure
+<h2 id="project-structure">Project Structure</h2>
+
 <details>
 <summary>Click to expand project structure</summary>
 
@@ -192,7 +199,8 @@ This entity–event separation allows the system to scale analytics independentl
 - Advanced admin visualizations for long-term trend analysis.
 - Optional resume feedback export for users.
 
-### Preview
+<h2 id="preview" align="center">Preview</h2>
+<hr>
 
 #### Home Page
 <p align="center">
@@ -308,9 +316,10 @@ This entity–event separation allows the system to scale analytics independentl
 AI Resume Analyzer is a fully functional, modular resume analysis system designed with scalability, explainability, and real-world usability in mind.  
 The project demonstrates practical applications of NLP, analytics, and system design using Streamlit and MongoDB.
 
-## Author
+<h2 id="author">Author</h2>
 
-Developed by **Chidvilas**  
+Developed by **Chidvilas** 
+📧 Email: [palarpachidvilas2419@gmail.com](mailto:palarpachidvilas2419@gmail.com) 
 
 ## Contributions
 
