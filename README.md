@@ -303,7 +303,19 @@ This entity–event separation allows the system to scale analytics independentl
   <img src="docs/screenshots/contact.png" width="900">
 </p>
 
+## Conclusion
 
+AI Resume Analyzer is a fully functional, modular resume analysis system designed with scalability, explainability, and real-world usability in mind.  
+The project demonstrates practical applications of NLP, analytics, and system design using Streamlit and MongoDB.
+
+## Author
+
+Developed by **Chidvilas**  
+
+## Contributions
+
+Contributions, suggestions, and feedback are welcome.  
+Feel free to open an issue or submit a pull request.
 
 
 
