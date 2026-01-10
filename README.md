@@ -220,20 +220,20 @@ This entity–event separation allows the system to scale analytics independentl
 </p>
 
 
-## Skill Development & Career Support
+### Skill Development & Career Support
 
+<!-- Overview -->
 <p align="center">
   <img src="docs/screenshots/recomendations.png" width="900">
 </p>
 
+<!-- Full width -->
 <p align="center">
   <img src="docs/screenshots/recom1.png" width="900">
 </p>
 
+<!-- Side by side -->
 <p align="center">
-  <img src="docs/screenshots/recom2.png" width="900">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/recom3.png" width="900">
+  <img src="docs/screenshots/recom2.png" width="45%">
+  <img src="docs/screenshots/recom3.png" width="45%">
 </p>
