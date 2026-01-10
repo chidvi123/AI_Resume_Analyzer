@@ -150,3 +150,9 @@ The system uses a clear separation between core entities and event-based analyti
 This entity–event separation allows the system to scale analytics independently while keeping resume intelligence centralized and consistent.
 
 ### Installation Steps
+
+1. Clone the repository
+
+   ```bash
+   git clone https://github.com/your-username/AI_Resume_Analyzer.git
+   cd AI_Resume_Analyzer
