@@ -6,3 +6,4 @@ sentence-transformers
 pdfminer.six
 pymongo
 matplotlib
+python-dotenv
