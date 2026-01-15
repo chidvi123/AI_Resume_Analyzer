@@ -1,7 +1,7 @@
 import streamlit as st
 import hashlib
 from datetime import datetime
-from backend.utils.helpers import save_uploaded_file, show_pdf
+from backend.utils.helpers import save_uploaded_file
 from backend.parser.pdf_reader import extract_text_from_pdf
 from backend.parser.resume_parser import parse_resume
 from backend.analysis.experience_level import detect_experience_level
@@ -38,12 +38,6 @@ def user_page():
         st.stop()
 
     file_path = save_uploaded_file(uploaded_file)
-
-    # ===================== PREVIEW =====================
-    st.subheader("📄 Resume Preview")
-    show_pdf(file_path)
-
-    st.divider()
 
     # ===================== TEXT EXTRACTION =====================
     extracted_text = extract_text_from_pdf(file_path)
