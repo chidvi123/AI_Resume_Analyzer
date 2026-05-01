@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 from backend.database.db import get_db
 from backend.analysis.resume_similarities import get_top_k_similar_resumes
@@ -100,27 +100,22 @@ def admin_page():
             labels = list(map(str, sorted(rating_counts.keys())))
             sizes = [rating_counts[r] for r in sorted(rating_counts.keys())]
 
-            fig, ax = plt.subplots(
-                figsize=(3, 3),   
-                dpi=90            
+            fig = px.pie(
+                values=sizes,
+                names=labels,
+                title="Rating Distribution",
+                hole=0.4,
+            )
+            fig.update_traces(textinfo='percent+label')
+            fig.update_layout(
+                margin=dict(t=30, b=10, l=10, r=10), 
+                showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#cbd5f5")
             )
 
-            ax.pie(
-                sizes,
-                labels=labels,
-                autopct="%1.0f%%",
-                startangle=90,
-                textprops={"fontsize": 9}  
-            )
-
-            ax.set_title(
-                "Rating Distribution",
-                fontsize=10
-            )
-
-            plt.tight_layout()
-
-            st.pyplot(fig, width="content") 
+            st.plotly_chart(fig, width="stretch")
 
 
     # ===================== ADMIN INSIGHTS =====================
@@ -190,42 +185,55 @@ def admin_page():
     col1, col2 = st.columns(2)
 
     with col1:
-        exp_counts = df["experience_level"].value_counts()
-        fig, ax = plt.subplots()
-        ax.bar(exp_counts.index, exp_counts.values)
-        ax.set_title("Experience Level Distribution")
-        st.pyplot(fig)
+        exp_counts = df["experience_level"].value_counts().reset_index()
+        exp_counts.columns = ["Experience Level", "Count"]
+        fig = px.bar(exp_counts, x="Experience Level", y="Count", title="Experience Level Distribution", text="Count")
+        fig.update_traces(textposition='outside')
+        fig.update_layout(
+            margin=dict(t=30, b=10, l=10, r=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#cbd5f5")
+        )
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
-        role_counts = df["target_role"].value_counts()
-        fig, ax = plt.subplots()
-        ax.pie(role_counts.values, labels=role_counts.index, autopct="%1.1f%%")
-        ax.set_title("Target Job Role Distribution")
-        st.pyplot(fig)
+        role_counts = df["target_role"].value_counts().reset_index()
+        role_counts.columns = ["Target Job Role", "Count"]
+        fig = px.pie(role_counts, names="Target Job Role", values="Count", title="Target Job Role Distribution", hole=0.3)
+        fig.update_traces(textinfo='percent+label')
+        fig.update_layout(
+            margin=dict(t=30, b=10, l=10, r=10), 
+            showlegend=False,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#cbd5f5")
+        )
+        st.plotly_chart(fig, width="stretch")
 
     st.divider()
 
     # ===================== SCORE DISTRIBUTION =====================
     st.subheader("📉 Resume Score Distribution")
 
-    fig, ax = plt.subplots(
-        figsize=(4, 2.5),   # 👈 controls size
-        dpi=100
+    fig = px.histogram(
+        df, 
+        x="resume_score", 
+        nbins=10, 
+        title="Resume Score Distribution",
+        labels={"resume_score": "Score"},
+        color_discrete_sequence=["#2563eb"],
+        text_auto=True
+    )
+    fig.update_layout(
+        margin=dict(t=30, b=10, l=10, r=10), 
+        yaxis_title="Count",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#cbd5f5")
     )
 
-    ax.hist(
-        df["resume_score"].dropna(),
-        bins=10,
-        edgecolor="white"
-    )
-
-    ax.set_xlabel("Score", fontsize=9)
-    ax.set_ylabel("Count", fontsize=9)
-    ax.set_title("Resume Score Distribution", fontsize=10)
-
-    plt.tight_layout()
-
-    st.pyplot(fig, width="content")
+    st.plotly_chart(fig, width="stretch")
 
     st.divider()
 

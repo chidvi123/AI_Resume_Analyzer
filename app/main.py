@@ -1,6 +1,8 @@
 import os
 import sys
 import streamlit as st
+import requests
+from streamlit_lottie import st_lottie
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT_DIR not in sys.path:
@@ -59,11 +61,13 @@ st.markdown(
 
     /* ===== CARDS ===== */
     .card {
-        background-color: #111827;
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 1.6rem;
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        border: 1px solid #1f2937;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
 
         height: 220px;
         display: flex;
@@ -72,11 +76,13 @@ st.markdown(
     }
 
     .card-auto {
-        background-color: #111827;
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 1.6rem;
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        border: 1px solid #1f2937;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         height: auto;
     }
 
@@ -90,6 +96,12 @@ st.markdown(
         font-size: 18px;
         font-weight: 600;
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.5);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 40px rgba(37, 99, 235, 0.7);
     }
 
     /* ===== SIDEBAR ===== */
@@ -115,9 +127,25 @@ st.markdown(
 
 # =========================================================
 
+@st.cache_data
+def load_lottieurl(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
+        return None
+
 def main():
     st.sidebar.title("AI Resume Analyzer")
     st.sidebar.caption("Smart resume analysis & insights")
+
+    lottie_json = load_lottieurl("https://lottie.host/4a5b06bd-bc27-4de0-8e6f-75895781a711/c9kI6N0j91.json")
+    if lottie_json:
+        with st.sidebar:
+            st_lottie(lottie_json, height=120, key="sidebar_lottie")
+            st.divider()
 
     page = st.sidebar.radio(
         "Navigation",
