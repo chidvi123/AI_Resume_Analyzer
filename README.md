@@ -331,18 +331,220 @@ Developed by **Chidvilas**
 Contributions, suggestions, and feedback are welcome.  
 Feel free to open an issue or submit a pull request.
 
+## 📊 System Architecture & Flow Diagrams
 
+# AI Resume Analyzer — Diagrams
 
+---
 
+## 1. Authentication Gate
 
+```mermaid
+flowchart TD
+    A([User Opens App]) --> B{session_state\nlogged_in?}
+    B -- ❌ False --> C[Show Login Page\napp/views/login.py]
+    B -- ✅ True --> D[Show Sidebar\n+ Navigation]
+    C --> E{Login or Register?}
+    E -- Login --> F[verify_user\nauth.py]
+    E -- Register --> G[register_user\nauth.py]
+    F --> H[(MongoDB\nusers collection)]
+    G --> H
+    H -- bcrypt match --> I[Set session_state\nlogged_in=True\nrole=user/admin]
+    H -- no match --> J[Show Error]
+    G -- new user --> K[bcrypt hash\nstore in DB\nAuto-login]
+    K --> I
+    I --> D
+```
 
+---
 
+## 2. Role-Based Navigation
 
+```mermaid
+flowchart LR
+    A[Logged In User] --> B{role?}
+    B -- user --> C[🏠 Home\n👤 User\n💬 Feedback\nℹ️ About]
+    B -- admin --> D[🏠 Home\n👤 User\n💬 Feedback\nℹ️ About\n🛠️ Admin]
+    C --> E[app/views/home.py\napp/views/user.py\napp/views/feedback.py\napp/views/about.py]
+    D --> F[All above +\napp/views/admin.py]
+```
 
+---
 
+## 3. Resume Analysis Pipeline
 
+```mermaid
+flowchart TD
+    A([User Uploads PDF]) --> B[save_uploaded_file\nhelpers.py]
+    B --> C[extract_text_from_pdf\npdf_reader.py]
+    C --> D[SHA-256 Hash of Text]
+    D --> E{get_resume_by_hash\nuser_data.py}
+    E -- Already in DB --> F[Load Cached Result\nSkip Re-Analysis]
+    E -- New Resume --> G[Run Full Pipeline]
 
+    G --> H[parse_resume\nresume_parser.py]
+    H --> H1[Groq API - Llama 3\nname + skills]
+    H --> H2[Regex\nemail + phone]
 
+    G --> I[detect_experience_level\nexperience_level.py\nFresher / Intermediate / Experienced]
+    G --> J[calculate_resume_score\nresume_score.py\n0-100 + breakdown]
+    G --> K[normalize_skills\nnormalizer.py\naliases + lowercase]
+    K --> L[analyze_skill_gap\nskill_gap.py\npresent vs missing]
 
+    G --> M[build_semantic_text\nsematic_text_builder.py]
+    M --> N[get_embedding\nembeddings.py\nSentenceTransformer\n384-dim vector]
+    N --> O[cosine_similarity\nsimilarity.py\nvs JD embedding]
+    O --> P[job_match_score\n0.0 to 1.0]
 
+    H1 --> Q[Assemble Full Record]
+    H2 --> Q
+    I --> Q
+    J --> Q
+    L --> Q
+    P --> Q
 
+    Q --> R[(MongoDB\nresumes collection)]
+    Q --> S[(MongoDB\nanalytics collection\nresume_id + role + score)]
+    Q --> T[get_recommended_courses\ncourse_recommender.py]
+    T --> U[Render Results\nin Streamlit UI]
+    F --> U
+```
+
+---
+
+## 4. MongoDB ER Diagram
+
+```mermaid
+erDiagram
+    USERS {
+        string username PK
+        string password_hash
+        string role
+    }
+
+    RESUMES {
+        ObjectId _id PK
+        string name
+        string email
+        string phone
+        array skills
+        string experience_level
+        int score
+        object score_breakdown
+        string target_role
+        float job_match_score
+        array present_skills
+        array missing_skills
+        array embedding
+        string resume_hash
+        int cluster_id
+        datetime timestamp
+    }
+
+    ANALYTICS {
+        ObjectId _id PK
+        ObjectId resume_id FK
+        string target_role
+        float job_match_score
+        datetime timestamp
+    }
+
+    FEEDBACK {
+        ObjectId _id PK
+        string name
+        string email
+        int rating
+        string comments
+        datetime timestamp
+    }
+
+    RESUMES ||--o{ ANALYTICS : "one resume\nmany events"
+```
+
+---
+
+## 5. Caching Behaviour
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Streamlit
+    participant Cache
+    participant Groq
+
+    User->>Streamlit: Upload Resume (PDF)
+    Streamlit->>Cache: extract_with_ai(text) called?
+    Cache-->>Streamlit: MISS - not cached yet
+    Streamlit->>Groq: API call - extract skills
+    Groq-->>Streamlit: {name, skills[]}
+    Streamlit->>Cache: Store result for this text
+    Streamlit-->>User: Show results
+
+    Note over User,Groq: User clicks something (Streamlit reruns)
+
+    User->>Streamlit: Same resume still loaded
+    Streamlit->>Cache: extract_with_ai(text) called?
+    Cache-->>Streamlit: HIT - return saved result instantly
+    Note over Groq: API NOT called again ✅
+    Streamlit-->>User: Show results instantly
+```
+
+---
+
+## 6. End-to-End System Flow
+
+```mermaid
+flowchart TD
+    Browser([Browser]) --> SL[Streamlit Cloud\napp/main.py]
+    SL --> AG{Auth Gate\nsession_state}
+    AG -- not logged in --> LP[Login Page\nlogin.py]
+    LP --> MDB1[(MongoDB\nusers)]
+    MDB1 -- verified --> AG
+    AG -- logged in --> NAV[Role-Based Sidebar]
+    NAV --> UP[User Uploads PDF]
+    UP --> PDF[pdfminer\nextract text]
+    PDF --> HASH[SHA-256 Hash]
+    HASH --> DUP{In MongoDB?}
+    DUP -- yes --> CACHE[Load Cached\nResult]
+    DUP -- no --> GROQ[Groq API\nLlama 3\nSkill Extraction]
+    GROQ --> RULES[Rule-Based\nScoring + Experience]
+    RULES --> ST[SentenceTransformer\nEmbedding 384-dim]
+    ST --> COS[Cosine Similarity\nvs Job Description]
+    COS --> SKGAP[Skill Gap\nAnalysis]
+    SKGAP --> SAVE[(MongoDB\nresumes + analytics)]
+    SAVE --> REC[Course\nRecommendations]
+    REC --> UI([Streamlit UI\nResults Displayed])
+    CACHE --> UI
+
+    NAV -- admin role --> ADMIN[Admin Dashboard\nadmin.py]
+    ADMIN --> MDB2[(MongoDB\nAll Collections)]
+    MDB2 --> CHARTS[Plotly Charts\nClustering\nSimilarity Search]
+    CHARTS --> UI
+```
+
+---
+
+## 7. AI vs Rule-Based Decision Map
+
+```mermaid
+flowchart LR
+    A[Resume Text] --> B{What to extract?}
+
+    B --> C[Skills + Name]
+    B --> D[Email + Phone]
+    B --> E[Experience Level]
+    B --> F[Resume Score]
+    B --> G[Job Match]
+
+    C -->|Context needed\nAI required| C1[Groq API\nLlama 3\nllama-3.1-8b-instant]
+    D -->|Pattern-based\n100% deterministic| D1[Regex]
+    E -->|Binary signals\nkeyword sections| E1[Rule-Based]
+    F -->|Section detection\nexplainable| F1[Rule-Based]
+    G -->|Semantic meaning\nembedding math| G1[SentenceTransformers\nCosine Similarity]
+
+    style C1 fill:#6366f1,color:#fff
+    style D1 fill:#10b981,color:#fff
+    style E1 fill:#10b981,color:#fff
+    style F1 fill:#10b981,color:#fff
+    style G1 fill:#8b5cf6,color:#fff
+```
