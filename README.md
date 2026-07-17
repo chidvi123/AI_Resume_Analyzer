@@ -20,7 +20,7 @@ AI Resume Analyzer is a production-ready Streamlit application that analyzes res
 ### User Features
 - Upload resumes in PDF format with in-app preview
 - Automatic resume text extraction using PDF parsing
-- Dictionary-based skill extraction with normalization and aliases
+- AI-powered skill extraction using Groq (Llama 3) for context-aware parsing
 - Rule-based experience level detection
 - Explainable resume quality scoring with detailed breakdown
 - Job role selection and semantic job match scoring
@@ -35,7 +35,8 @@ AI Resume Analyzer is a production-ready Streamlit application that analyzes res
 
 
 ### Admin Features
-- Secure admin access with session-based authentication
+- Secure role-based authentication (Login & Register) with bcrypt password hashing
+- User and Admin roles — Admin page hidden from regular users
 - Event-based analytics stored in MongoDB
 - Experience-level and role-wise performance insights
 - Global and role-specific missing skills analysis

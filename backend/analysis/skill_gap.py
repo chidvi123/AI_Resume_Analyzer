@@ -1,5 +1,5 @@
 from collections import Counter
-from backend.nlp.resume_registry import get_all_resume_entries
+from backend.database.db import get_db
 from backend.utils.normalizer import normalize_skills
 
 def analyze_skill_gap(resume_skills, required_skills):
@@ -16,20 +16,27 @@ def analyze_skill_gap(resume_skills, required_skills):
     }
 
 def get_global_skill_demand():
-    resumes=get_all_resume_entries()
-    counter=Counter()
-
+    db = get_db()
+    resumes = list(db["resumes"].find({}, {"skills_missing": 1}))
+    counter = Counter()
     for r in resumes:
-        counter.update(r.get("missing_skills",[]))
+        counter.update(r.get("skills_missing", []))
     return dict(counter)
 
 def get_rolewise_skill_demand(target_role):
-    resumes=get_all_resume_entries()
-    counter=Counter()
-
+    db = get_db()
+    # analytics collection stores target_role per analysis event
+    analytics = list(db["analytics"].find(
+        {"target_role": target_role},
+        {"resume_id": 1}
+    ))
+    resume_ids = [a["resume_id"] for a in analytics]
+    resumes = list(db["resumes"].find(
+        {"_id": {"$in": resume_ids}},
+        {"skills_missing": 1}
+    ))
+    counter = Counter()
     for r in resumes:
-        if r.get("target_role")==target_role:
-            counter.update(r.get("missing_skills",[]))
-
+        counter.update(r.get("skills_missing", []))
     return dict(counter)
 

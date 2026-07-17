@@ -1,83 +1,130 @@
+"""
+Resume parsing module.
+
+Extraction strategy:
+- Name & Skills: Groq API with llama3 (context-aware, handles messy/non-standard resumes)
+- Email & Phone: regex fallback (fast, free, deterministic)
+
+Groq is cached per resume text so the same upload never calls the API twice.
+"""
+
 import re
-import json
 import os
+import json
+import streamlit as st
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-# ---------------- EMAIL ----------------
+# ─── Groq client ─────────────────────────────────────────────────────────────
+
+def _get_groq_client():
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables.")
+    return Groq(api_key=api_key)
+
+
+# ─── AI extraction (cached) ──────────────────────────────────────────────────
+
+@st.cache_data(show_spinner=False)
+def extract_with_ai(text: str) -> dict:
+    """
+    Uses Groq (llama-3.1-8b-instant) to extract name and skills from resume text.
+    Returns a dict with 'name' and 'skills'.
+    Falls back to safe defaults on any error.
+    """
+    prompt = f"""You are a resume parser. Extract the following from the resume text below.
+Return ONLY a valid JSON object with no extra text, no markdown, no explanation.
+
+Fields to extract:
+- "name": The candidate's full name (string, or null if not found)
+- "skills": A comprehensive list of technical skills, tools, frameworks, languages, and platforms
+  mentioned anywhere in the resume. Be thorough — include skills implied by project descriptions
+  or experience (e.g. "built a REST API" should include "rest api").
+  All skill names must be lowercase.
+
+Resume text:
+\"\"\"
+{text[:4000]}
+\"\"\"
+
+Return exactly this JSON format:
+{{
+  "name": "...",
+  "skills": ["skill1", "skill2", ...]
+}}"""
+
+    try:
+        client = _get_groq_client()
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=1024,
+            response_format={"type": "json_object"}
+        )
+        raw = response.choices[0].message.content.strip()
+        parsed = json.loads(raw)
+
+        return {
+            "name": parsed.get("name") or None,
+            "skills": [s.lower().strip() for s in parsed.get("skills", []) if s]
+        }
+
+    except Exception as e:
+        # Graceful fallback — don't crash the app
+        return {"name": None, "skills": []}
+
+
+# ─── Email ───────────────────────────────────────────────────────────────────
+
 def extract_email(text: str):
     pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
     match = re.search(pattern, text)
     return match.group() if match else None
 
 
-# ---------------- PHONE ----------------
+# ─── Phone ───────────────────────────────────────────────────────────────────
+
 def extract_phone(text: str):
     pattern = r"(\+?\d{1,3}[- ]?)?\d{10}"
     match = re.search(pattern, text)
     return match.group() if match else None
 
 
-# ---------------- NAME ----------------
+# ─── Skills (via Groq AI) ─────────────────────────────────────────────────────
+
+def extract_skills(text: str, skills_file=None) -> list[str]:
+    """
+    Extracts skills using Groq llama3.
+    The skills_file param is kept for backward compatibility but unused.
+    """
+    result = extract_with_ai(text)
+    return result.get("skills", [])
+
+
+# ─── Name (via Groq AI) ───────────────────────────────────────────────────────
+
 def extract_name(text: str):
-    lines = text.split("\n")
-    for line in lines[:5]:
-        line = line.strip()
-        if len(line.split()) in [2, 3]:
-            if not any(char.isdigit() for char in line):
-                return line
-    return None
+    result = extract_with_ai(text)
+    return result.get("name")
 
 
-# ---------------- SKILLS ----------------
-def extract_skills(text: str, skills_file="data/skills.json"):
+# ─── Main parser ─────────────────────────────────────────────────────────────
+
+def parse_resume(text: str) -> dict:
     """
-    Pure skill extraction:
-    - Uses skills.json only
-    - Handles dirty PDFs (punctuation, spacing)
-    - NO aliases
-    - NO normalization
+    Full resume parsing.
+    AI call is made once and cached — email/phone use regex.
     """
+    ai_data = extract_with_ai(text)
 
-    if not text or not os.path.exists(skills_file):
-        return []
-
-    # Load global skills
-    with open(skills_file, "r", encoding="utf-8") as f:
-        skills_list = json.load(f)
-
-    if not isinstance(skills_list, list):
-        return []
-
-    # Normalize resume text ONLY for matching safety
-    text_lower = text.lower()
-    text_lower = re.sub(r"[^\w\s]", " ", text_lower)   # remove punctuation
-    text_lower = re.sub(r"[\u00a0]", " ", text_lower)
-    text_lower = re.sub(r"\s+", " ", text_lower)      # collapse spaces
-    #text_spaced = f" {text_lower} "
-    
-    found = set()
-
-    for skill in skills_list:
-        skill_l = re.sub(r"[^\w\s]", " ", skill.lower()).strip()
-
-        # ignore invalid / garbage skills
-        if len(skill_l) < 2:
-            continue
-
-        pattern = r"\b" + r"\s+".join(map(re.escape, skill_l.split())) + r"\b"
-
-
-
-        if re.search(pattern, text_lower):
-            found.add(skill_l)
-
-    return sorted(found)
-
-# ---------------- PARSER ----------------
-def parse_resume(text: str):
     return {
-        "name": extract_name(text),
-        "email": extract_email(text),
-        "phone": extract_phone(text),
-        "skills": extract_skills(text)
+        "name":   ai_data.get("name"),
+        "email":  extract_email(text),
+        "phone":  extract_phone(text),
+        "skills": ai_data.get("skills", [])
     }

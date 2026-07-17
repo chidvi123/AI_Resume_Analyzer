@@ -11,22 +11,24 @@ ROLE_SKILLS = {
         "sql",
         "data visualization",
         "matplotlib",
-        "seaborn"
+        "seaborn",
+        "feature engineering"
     ],
 
     "backend_developer": [
         "python",
         "django",
         "flask",
+        "fastapi",
         "rest api",
-        "api development",
         "sql",
         "nosql",
-        "database design",
+        "mongodb",
+        "postgresql",
         "authentication",
         "authorization",
         "jwt",
-        "backend development"
+        "docker"
     ],
 
     "frontend_developer": [
@@ -39,9 +41,8 @@ ROLE_SKILLS = {
         "responsive design",
         "bootstrap",
         "tailwind css",
-        "frontend development",
-        "ui development",
-        "api integration"
+        "api integration",
+        "typescript"
     ],
 
     "fullstack_developer": [
@@ -56,7 +57,8 @@ ROLE_SKILLS = {
         "rest api",
         "sql",
         "nosql",
-        "full stack development"
+        "docker",
+        "git"
     ],
 
     "machine_learning_engineer": [
@@ -68,7 +70,10 @@ ROLE_SKILLS = {
         "pytorch",
         "model deployment",
         "api development",
-        "data preprocessing"
+        "data preprocessing",
+        "feature engineering",
+        "numpy",
+        "pandas"
     ],
 
     "devops_engineer": [
@@ -81,8 +86,10 @@ ROLE_SKILLS = {
         "aws",
         "azure",
         "gcp",
-        "deployment",
-        "monitoring"
+        "terraform",
+        "ansible",
+        "monitoring",
+        "bash"
     ],
 
     "data_analyst": [
@@ -93,8 +100,10 @@ ROLE_SKILLS = {
         "power bi",
         "tableau",
         "data visualization",
-        "reporting",
-        "dashboards"
+        "pandas",
+        "numpy",
+        "statistics",
+        "reporting"
     ],
 
     "software_engineer": [
@@ -104,9 +113,12 @@ ROLE_SKILLS = {
         "javascript",
         "data structures",
         "algorithms",
-        "oop",
+        "object oriented programming",
         "problem solving",
-        "software development"
+        "software development",
+        "system design",
+        "git",
+        "sql"
     ],
 
     "mobile_app_developer": [
@@ -116,8 +128,10 @@ ROLE_SKILLS = {
         "flutter",
         "react native",
         "ios",
+        "swift",
         "api integration",
-        "mobile development"
+        "mobile development",
+        "firebase"
     ],
 
     "qa_engineer": [
@@ -128,7 +142,10 @@ ROLE_SKILLS = {
         "bug tracking",
         "api testing",
         "postman",
-        "quality assurance"
+        "pytest",
+        "jest",
+        "quality assurance",
+        "regression testing"
     ]
 }
 
@@ -144,5 +161,9 @@ SKILL_ALIASES = {
     "postgres": "postgresql",
     "mongo": "mongodb",
     "ci cd": "ci/cd",
-    "restful api": "rest api"
+    "restful api": "rest api",
+    "rest apis": "rest api",
+    "oop": "object oriented programming",
+    "k8s": "kubernetes",
+    "tf": "tensorflow"
 }

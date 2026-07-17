@@ -28,6 +28,9 @@
   "vue",
   "next.js",
   "nuxt.js",
+  "responsive design",
+  "ui development",
+  "frontend development",
 
   "node.js",
   "express",
@@ -39,6 +42,7 @@
   "laravel",
   "rails",
   "asp.net",
+  "backend development",
 
   "sql",
   "mysql",
@@ -51,10 +55,12 @@
   "cassandra",
   "redis",
   "firebase",
+  "database design",
 
   "rest api",
   "graphql",
   "api development",
+  "api integration",
   "microservices",
   "monolithic architecture",
   "mvc",
@@ -74,6 +80,10 @@
   "model training",
   "model evaluation",
   "model deployment",
+  "data preprocessing",
+  "statistics",
+  "reporting",
+  "dashboards",
 
   "scikit-learn",
   "tensorflow",
@@ -130,6 +140,10 @@
   "integration testing",
   "automation testing",
   "manual testing",
+  "regression testing",
+  "test cases",
+  "bug tracking",
+  "quality assurance",
   "selenium",
   "pytest",
   "jest",
@@ -145,12 +159,16 @@
   "data structures",
   "algorithms",
   "object oriented programming",
-  "oop",
   "system design",
   "design patterns",
   "problem solving",
   "software development",
   "debugging",
+  "code review",
+  "performance optimization",
+  "scalability",
+  "deployment",
+  "full stack development",
 
   "windows",
   "linux administration",
@@ -166,9 +184,5 @@
   "confluence",
 
   "documentation",
-  "technical writing",
-  "code review",
-  "performance optimization",
-  "scalability",
-  "deployment"
+  "technical writing"
 ]

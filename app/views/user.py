@@ -36,8 +36,24 @@ def load_lottieurl(url: str):
 def user_page():
 
     # ===================== HEADER =====================
+    st.markdown(
+        """
+        <style>
+        .pg-badge b { color: #a5b4fc !important; -webkit-text-fill-color: #a5b4fc !important; }
+        </style>
+        <div style='margin-bottom:0.8rem;'>
+            <div class='pg-badge' style='display:inline-block; background:rgba(99,102,241,0.15);
+                        border:1px solid rgba(99,102,241,0.4);
+                        padding:5px 14px; border-radius:999px;'>
+                <b style='font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'
+                >Resume Analysis</b>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     st.title("AI Resume Analyzer")
-    st.caption("Upload your resume and get clear, actionable insights")
+    st.caption("Upload your resume and get clear, actionable insights in seconds")
 
     st.divider()
 
@@ -97,14 +113,56 @@ def user_page():
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("Experience Level", experience_level)
+            st.markdown(
+                f"""
+                <div class="metric-highlight">
+                    <div class="mh-label">Experience Level</div>
+                    <div class="mh-value">{experience_level}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         with col2:
-            st.metric("Resume Score", f"{resume_score} / 100")
+            score_color = "#10b981" if resume_score >= 70 else "#f59e0b" if resume_score >= 45 else "#ef4444"
+            st.markdown(
+                f"""
+                <div class="metric-highlight">
+                    <div class="mh-label">Resume Score</div>
+                    <div class="mh-value" style="background:linear-gradient(135deg,{score_color},{score_color}cc);
+                         -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+                        {resume_score} <span style="font-size:1.1rem; font-weight:500;">/100</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-        with st.expander("ℹ️ Resume Score Breakdown"):
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        with st.expander("📊 Resume Score Breakdown"):
+            total_possible = sum(v for v in score_breakdown.values() if v > 0) or 1
             for section, points in score_breakdown.items():
-                st.write(f"- {section}: {points} points")
+                max_pts = {"Experience/Internship": 25, "Skills": 20, "Projects": 20,
+                           "Education": 15, "Summary/Objective": 10, "Certification": 10}.get(section, 10)
+                pct = int((points / max_pts) * 100) if max_pts else 0
+                bar_color = "#10b981" if points == max_pts else "#f59e0b" if points > 0 else "#ef4444"
+                st.markdown(
+                    f"""
+                    <div class="score-row">
+                        <div class="score-row-label">
+                            <span>{section}</span>
+                            <span style="color:{'#10b981' if points == max_pts else '#f59e0b' if points > 0 else '#ef4444'}">
+                                {points} / {max_pts} pts
+                            </span>
+                        </div>
+                        <div class="score-track">
+                            <div class="score-fill" style="width:{pct}%; background:linear-gradient(90deg,{bar_color},{bar_color}cc);"></div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     with tab2:
         resume_skills = normalize_skills(parsed_data.get("skills", []))
@@ -116,31 +174,49 @@ def user_page():
 
         st.subheader("Skill Gap Analysis")
 
-        st.markdown("##### ✅ Your Current Skills")
-        if present_skills:
-            st.markdown(
-                " ".join(
-                    f"<span style='background:#2ecc71;color:white;padding:6px 10px;"
-                    f"border-radius:12px;margin:4px;display:inline-block;font-size:14px;'>{s}</span>"
-                    for s in present_skills
-                ),
-                unsafe_allow_html=True
-            )
-        else:
-            st.info("No matching skills found.")
+        total = len(required_skills)
+        matched = len(present_skills)
+        pct = int((matched / total) * 100) if total else 0
 
-        st.markdown("##### 🚀 Recommended Skills to Learn")
-        if missing_skills:
-            st.markdown(
-                " ".join(
-                    f"<span style='background:#e74c3c;color:white;padding:6px 10px;"
-                    f"border-radius:12px;margin:4px;display:inline-block;font-size:14px;'>{s}</span>"
-                    for s in missing_skills
-                ),
-                unsafe_allow_html=True
-            )
-        else:
-            st.toast("You already meet the skill requirements 🎉", icon="🎉")
+        st.markdown(
+            f"""
+            <div class="card-auto" style="margin-bottom:1.2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">
+                        Skills matched: <span style="color:#34d399;">{matched}</span> / {total}
+                    </span>
+                    <span style="font-size:1.2rem; font-weight:800; color:#34d399;">{pct}%</span>
+                </div>
+                <div class="score-track">
+                    <div class="score-fill" style="width:{pct}%; background:linear-gradient(90deg,#10b981,#34d399);"></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        col_a, col_b = st.columns(2)
+
+        with col_a:
+            st.markdown("<p class='section-label'>✅ Skills You Have</p>", unsafe_allow_html=True)
+            if present_skills:
+                st.markdown(
+                    " ".join(f"<span class='chip-green'>{s}</span>" for s in present_skills),
+                    unsafe_allow_html=True
+                )
+            else:
+                st.info("No matching skills found.")
+
+        with col_b:
+            st.markdown("<p class='section-label'>🚀 Skills to Learn</p>", unsafe_allow_html=True)
+            if missing_skills:
+                st.markdown(
+                    " ".join(f"<span class='chip-red'>{s}</span>" for s in missing_skills),
+                    unsafe_allow_html=True
+                )
+            else:
+                st.toast("You already meet the skill requirements 🎉", icon="🎉")
+                st.success("You meet all skill requirements for this role! 🎉")
 
     with tab3:
 
@@ -157,9 +233,33 @@ def user_page():
         match_score = cosine_similarity(resume_embedding, job_embedding)
         match_percentage = int(round(match_score * 100, 0))
 
-        st.subheader("📈 Job Match Score")
-        st.metric("Match Percentage", f"{match_percentage}%")
-        st.progress(match_percentage / 100.0, text=f"Similarity to {target_role}")
+        match_color = "#10b981" if match_percentage >= 65 else "#f59e0b" if match_percentage >= 40 else "#ef4444"
+        match_label = "Strong Match" if match_percentage >= 65 else "Moderate Match" if match_percentage >= 40 else "Needs Work"
+
+        st.subheader("Job Match Score")
+        st.markdown(
+            f"""
+            <div class="card-auto" style="text-align:center; padding: 2.5rem;">
+                <div style="font-size:4rem; font-weight:900;
+                            background:linear-gradient(135deg,{match_color},{match_color}99);
+                            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                            background-clip:text; line-height:1;">
+                    {match_percentage}%
+                </div>
+                <div style="margin:0.5rem 0 1.2rem; font-size:14px; color:{match_color}; font-weight:600;">
+                    {match_label}
+                </div>
+                <div class="score-track" style="max-width:400px; margin:0 auto;">
+                    <div class="score-fill"
+                         style="width:{match_percentage}%; background:linear-gradient(90deg,{match_color},{match_color}cc);"></div>
+                </div>
+                <div style="margin-top:1rem; font-size:13px; color:var(--text-muted);">
+                    Semantic similarity to <strong style="color:var(--text-secondary);">{target_role.replace('_',' ').title()}</strong>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     with tab4:
         st.subheader("Learning Resources")

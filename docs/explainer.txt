@@ -33,8 +33,8 @@ the explanation ⬇️
 
 1️⃣ Activate venv
 
-source venv/Scripts/activate
-
+.\venv\Scripts\activate        (PowerShell)
+venv\Scripts\activate          (CMD)
 
 2️⃣ Pull latest code
 
@@ -43,6 +43,7 @@ git pull
 
 3️⃣ Run app
 
+streamlit run app/main.py
 streamlit run app/main.py
 
 
@@ -56,3 +57,23 @@ git commit -m "message"
 6️⃣ Push
 
 git push
+
+
+/////////////////////////////////////////////
+
+🔑 Auth
+
+Admin credentials:    admin / admin123
+New users register via the Register tab on login page
+Passwords hashed with bcrypt — never stored as plain text
+Session state manages login across Streamlit page switches
+
+🤖 AI Stack
+
+Skill extraction:  Groq API → llama-3.1-8b-instant (Meta's Llama 3)
+Email/Phone:       regex (fast, deterministic)
+Job matching:      SentenceTransformers + cosine similarity
+Scoring:           rule-based (explainable)
+
+Groq key stored in .env as GROQ_API_KEY
+MongoDB URI stored in .env as MONGODB_URI

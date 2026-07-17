@@ -21,6 +21,22 @@ ADMIN_PASSWORD = "admin123"
 def admin_page():
 
     # ===================== HEADER =====================
+    st.markdown(
+        """
+        <style>
+        .pg-badge b { color: #a5b4fc !important; -webkit-text-fill-color: #a5b4fc !important; }
+        </style>
+        <div style='margin-bottom:0.8rem;'>
+            <div class='pg-badge' style='display:inline-block; background:rgba(99,102,241,0.15);
+                        border:1px solid rgba(99,102,241,0.4);
+                        padding:5px 14px; border-radius:999px;'>
+                <b style='font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'
+                >Admin Only</b>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     st.title("Admin Dashboard")
     st.caption("System analytics, trends, and internal insights")
 
@@ -31,21 +47,37 @@ def admin_page():
         st.session_state["admin_authenticated"] = False
 
     if not st.session_state["admin_authenticated"]:
-        password = st.text_input("Enter Admin Password", type="password")
-
-        if st.button("Login"):
-            if password == ADMIN_PASSWORD:
-                st.session_state["admin_authenticated"] = True
-                st.success("Access granted")
-                st.rerun()
-            else:
-                st.error("Incorrect password")
+        st.markdown(
+            """
+            <div style='max-width:420px; margin: 3rem auto; background:rgba(13,21,37,0.9);
+                        border:1px solid rgba(99,102,241,0.25); border-radius:24px; padding:2.5rem;
+                        box-shadow:0 0 40px rgba(99,102,241,0.2), 0 16px 48px rgba(0,0,0,0.5); text-align:center;'>
+                <div style='font-size:3rem; margin-bottom:1rem;'>🔐</div>
+                <h3 style='color:#f1f5f9; margin-bottom:0.3rem;'>Admin Access Required</h3>
+                <p style='color:#64748b; font-size:13px; margin-bottom:0;'>Enter the admin password to continue</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            password = st.text_input("Admin Password", type="password", label_visibility="collapsed",
+                                     placeholder="🔑 Enter admin password...")
+            if st.button("Unlock Dashboard", width="stretch"):
+                if password == ADMIN_PASSWORD:
+                    st.session_state["admin_authenticated"] = True
+                    st.success("Access granted ✅")
+                    st.rerun()
+                else:
+                    st.error("❌ Incorrect password. Try again.")
         return
 
-    if st.button("Logout"):
-        st.session_state["admin_authenticated"] = False
-        st.success("Logged out")
-        st.stop()
+    col_logout, _ = st.columns([1, 5])
+    with col_logout:
+        if st.button("🚪 Logout"):
+            st.session_state["admin_authenticated"] = False
+            st.success("Logged out")
+            st.stop()
 
     # ===================== LOAD DATA =====================
     db = get_db()
@@ -68,18 +100,50 @@ def admin_page():
     df["job_match_score"] = pd.to_numeric(df["job_match_score"], errors="coerce")
 
     # ===================== OVERVIEW METRICS =====================
-    st.subheader("📊 System Overview")
+    st.markdown(
+        """
+        <div style='display:flex; align-items:center; gap:10px; margin-bottom:0.5rem;'>
+            <span style='font-size:1.3rem;'>📊</span>
+            <h2 style='margin:0;'>System Overview</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Total Resumes", len(df))
+        st.markdown(
+            f"""
+            <div class="metric-highlight">
+                <div class="mh-label">📄 Total Analyses</div>
+                <div class="mh-value">{len(df)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     with col2:
-        st.metric("Average Resume Score", round(df["resume_score"].mean(), 2))
+        st.markdown(
+            f"""
+            <div class="metric-highlight">
+                <div class="mh-label">⭐ Avg Resume Score</div>
+                <div class="mh-value">{round(df["resume_score"].mean(), 1)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     with col3:
-        st.metric("Unique Job Roles", df["target_role"].nunique())
+        st.markdown(
+            f"""
+            <div class="metric-highlight">
+                <div class="mh-label">🎯 Unique Job Roles</div>
+                <div class="mh-value">{df["target_role"].nunique()}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     st.divider()
 
@@ -130,7 +194,7 @@ def admin_page():
             sorted(global_missing.items(), key=lambda x: x[1], reverse=True)[:7],
             columns=["Skill", "Missing Count"]
         )
-        st.dataframe(gm_df, width="stretch")
+        st.dataframe(gm_df.reset_index(drop=True), width="stretch")
     else:
         st.info("No missing skill data available.")
 
@@ -145,7 +209,7 @@ def admin_page():
                 rows.append([role, skill, count])
 
         rm_df = pd.DataFrame(rows, columns=["Role", "Skill", "Missing Count"])
-        rm_df = rm_df.sort_values("Missing Count", ascending=False)
+        rm_df = rm_df.sort_values("Missing Count", ascending=False).reset_index(drop=True)
 
         st.dataframe(rm_df, width="stretch")
     else:
@@ -160,7 +224,7 @@ def admin_page():
             exp_vs_score.items(),
             columns=["Experience Level", "Average Resume Score"]
         )
-        st.dataframe(evs_df, width="stretch")
+        st.dataframe(evs_df.reset_index(drop=True), width="stretch")
     else:
         st.info("No experience-score analytics found.")
 
@@ -169,11 +233,11 @@ def admin_page():
     role_match = get_rolewise_job_match()
 
     if role_match:
-        rm_df = pd.DataFrame(
+        rm_df2 = pd.DataFrame(
             role_match.items(),
             columns=["Role", "Average Job Match Score"]
         )
-        st.dataframe(rm_df, width="stretch")
+        st.dataframe(rm_df2.reset_index(drop=True), width="stretch")
     else:
         st.info("No job-match analytics found.")
 
