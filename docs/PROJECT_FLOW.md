@@ -1,316 +1,262 @@
-# AI Resume Analyzer — Complete Project Flow
+# 📄 AI Resume Analyzer — Technical Architecture & Complete Project Flow
 
-## Entry Point
+This document details the complete end-to-end technical flow, system architecture, database schema, and module dependencies of the **AI Resume Analyzer**.
 
-Everything starts from pp/main.py:
+---
 
-`
+## 🚀 1. Application Entry Point
+
+The system is initiated via `app/main.py` using Streamlit's runtime engine:
+```bash
 streamlit run app/main.py
-`
+```
+
+### Flow Control on Startup
+1. **Directory Path Setup**: Dynamically inserts the root workspace directory into `sys.path` to ensure absolute imports function properly across files.
+2. **Page Configuration**: Configures page metadata (`page_title`, `page_icon="📄"`, `layout="wide"`) inside Streamlit.
+3. **Session State Initialization**: Pre-allocates memory for session variables to track user logins globally across state re-runs:
+   * `logged_in`: Boolean tracking current login status.
+   * `username`: Name of the authenticated user.
+   * `role`: Session role (`"user"` or `"admin"`).
 
 ---
 
-## Step 1 — Authentication Gate
+## 🔐 2. Authentication Gate
 
-`
-User opens app
-      |
-main.py checks: st.session_state.logged_in ?
-      |
-   No  -> show login_page()  (blocks everything)
-   Yes -> show sidebar + navigation
-`
+The application implements a strict security gate that blocks access to any internal page unless the user has authenticated.
 
-### Login / Register Flow (app/views/login.py)
+```
+                  ┌─────────────────────────────┐
+                  │      User Opens App         │
+                  └──────────────┬──────────────┘
+                                 │
+                   [ st.session_state.logged_in? ]
+                                 ├──────────────────────────────┐
+                            ❌ No (False)                  ✅ Yes (True)
+                                 ▼                              ▼
+                      ┌─────────────────────┐        ┌─────────────────────┐
+                      │  Render login_page  │        │  Render Navigation  │
+                      └─────────────────────┘        └─────────────────────┘
+```
 
-`
-User enters username + password
-      |
-verify_user(username, password)   <- backend/database/auth.py
-      |
-MongoDB users collection lookup
-      |
-bcrypt.checkpw(password, stored_hash)
-      |
-   Match    -> session_state: logged_in=True, username, role -> st.rerun()
-   No match -> show error
+### Security Engine (`backend/database/auth.py` & `app/views/login.py`)
 
-Register Tab:
-      |
-register_user(username, password, role=user)
-      |
-Check username exists in MongoDB
-      |
-bcrypt.hashpw(password) -> store in DB
-      |
-Auto-login immediately
-`
+* **🔑 Sign In Pipeline**:
+  1. The user inputs their `username` and `password` on the login UI.
+  2. The system invokes `verify_user(username, password)`.
+  3. A query is sent to the MongoDB `users` collection to check if the username exists.
+  4. Password verification is performed using **bcrypt**:
+     ```python
+     bcrypt.checkpw(password.encode(), stored_password_hash)
+     ```
+  5. If authenticated, session tokens (`logged_in`, `username`, `role`) are written to Streamlit memory and the page is refreshed (`st.rerun()`).
 
----
-
-## Step 2 — Role-Based Navigation
-
-`
-role == admin  ->  Home | User | Feedback | About | Admin
-role == user   ->  Home | User | Feedback | About
-`
-
-| Sidebar Option | File |
-|---|---|
-| Home | app/views/home.py |
-| User | app/views/user.py |
-| Feedback | app/views/feedback.py |
-| About | app/views/about.py |
-| Admin | app/views/admin.py |
+* **✨ Registration Pipeline**:
+  1. The user fills out `username`, `password`, and `confirm_password`.
+  2. If validations pass (e.g., minimum 6 characters, passwords match), the system executes `register_user(username, password, "user")`.
+  3. The system hashes the password with salt:
+     ```python
+     password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+     ```
+  4. The user details are stored in the MongoDB `users` collection.
+  5. The registered user is automatically logged in and session state is updated.
 
 ---
 
-## Step 3 — Resume Analysis Pipeline (app/views/user.py)
+## 🗺️ 3. Navigation & Role-Based Access Control (RBAC)
 
-`
-User uploads PDF
-      |
-save_uploaded_file()                <- backend/utils/helpers.py
-      |
-extract_text_from_pdf(path)         <- backend/parser/pdf_reader.py
-      |
-SHA-256 hash of text
-      |
-get_resume_by_hash(hash)            <- backend/database/user_data.py
-      |
-In MongoDB?  -> load cached result (skip re-analysis)
-Not in DB?   -> run full pipeline below
-`
+Once authenticated, `app/main.py` builds the sidebar routing menu based on the user's role:
 
-### Full Analysis Pipeline
+```
+Role: "admin"  ──► 🏠 Home  │  👤 User  │  💬 Feedback  │  ℹ️ About  │  🛠️ Admin
+Role: "user"   ──► 🏠 Home  │  👤 User  │  💬 Feedback  │  ℹ️ About
+```
 
-`
-resume_text
-      |
-      +-> parse_resume(text)              <- backend/parser/resume_parser.py
-      |       |
-      |       +-- Groq API (llama-3.1-8b-instant) -> name, skills[]
-      |       +-- regex                            -> email
-      |       +-- regex                            -> phone
-      |
-      +-> detect_experience_level(text)   <- backend/analysis/experience_level.py
-      |       Rule-based: checks keywords, page count
-      |       Result: Fresher / Intermediate / Experienced
-      |
-      +-> calculate_resume_score(text)    <- backend/analysis/resume_score.py
-      |       Section keyword checks: Summary, Education, Skills,
-      |       Projects, Experience, Certifications
-      |       Result: score 0-100 + breakdown
-      |
-      +-> normalize_skills(skills)        <- backend/utils/normalizer.py
-      |       Lowercase + aliases (ml -> machine learning)
-      |
-      +-> analyze_skill_gap(             <- backend/analysis/skill_gap.py
-      |       resume_skills,
-      |       ROLE_SKILLS[target_role]   <- backend/utils/constants.py
-      |   )
-      |   Result: { present_skills[], missing_skills[] }
-      |
-      +-> build_semantic_resume_text()   <- backend/utils/sematic_text_builder.py
-      |
-      +-> get_embedding(text)            <- backend/nlp/embeddings.py
-      |       SentenceTransformer all-MiniLM-L6-v2 -> 384-dim vector
-      |
-      +-> JOB_ROLE_DESCRIPTIONS[role]    <- backend/utils/job_roles.py
-      |       ~100-word realistic job posting per role
-      |
-      +-> get_embedding(job_description)
-      |
-      +-> cosine_similarity(             <- backend/nlp/similarity.py
-              resume_embedding,
-              job_embedding
-          )
-          Result: job_match_score (0.0 to 1.0)
-`
-
-### Data Persistence
-
-`
-Results -> save_resume()        -> MongoDB resumes collection
-        -> save_analytics()     -> MongoDB analytics collection
-                                   (resume_id, target_role, score, timestamp)
-                                   One-to-many: one resume, many analysis events
-`
-
-### Recommendations
-
-`
-missing_skills + target_role
-      |
-get_recommended_courses(target_role)   <- backend/recommender/course_recommender.py
-      Result: list of (course_title, url)
-
-+ resume_videos[] and interview_videos[]
-`
+### Page Module Mapping
+The sidebar selection maps dynamically to the following standalone modules:
+* **🏠 Home**: [home.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/home.py) (Overview, system stats, quick-start guide).
+* **👤 User**: [user.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/user.py) (Upload, PDF text extraction, AI parsing, matching, and recommendation dashboard).
+* **💬 Feedback**: [feedback.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/feedback.py) (User satisfaction surveys, ratings, and comments).
+* **ℹ️ About**: [about.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/about.py) (Author information, system details, contact form).
+* **🛠️ Admin**: [admin.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/admin.py) (Analytics charts, similarity searches, clustering visualizations).
 
 ---
 
-## Step 4 — Admin Dashboard (app/views/admin.py)
+## 📄 4. Core Resume Analysis Pipeline
 
-Only visible when session_state.role == admin.
+The primary system logic is driven inside [user.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/user.py) during resume uploads.
 
-`
-get_global_missing_skills()     -> Bar chart: most needed skills globally
-get_rolewise_missing_skills()   -> Role-wise skill gap breakdown
-get_experience_distribution()  -> Pie: Fresher/Intermediate/Experienced split
-get_role_performance()         -> Avg job match score per role
-
-Resume Similarity Search:
-  query text -> get_embedding(query) -> cosine_similarity vs all stored embeddings
-  Returns top-N most similar resumes
-
-KMeans Clustering:
-  load_all_resumes_for_ml() -> all embeddings from MongoDB
-  KMeans(n_clusters=k) -> save_cluster_assignments()
-  Plotly scatter: clusters visualized
-
-CSV Export of analytics data
-`
+### Phase A: Extraction & Deduplication
+1. **File Persistence**: The uploaded file is saved locally to the directory using `save_uploaded_file()`.
+2. **Text Extraction**: Raw text is parsed from the PDF using `extract_text_from_pdf()`.
+3. **Integrity Hashing**: A SHA-256 hash is generated from the raw text block:
+   ```python
+   resume_hash = hashlib.sha256(raw_text.encode()).hexdigest()
+   ```
+4. **Cache & Deduplication Lookup**:
+   * The database is queried for the hash: `get_resume_by_hash(resume_hash)`.
+   * **If found**: The saved analysis is retrieved instantly, skipping heavy calculations.
+   * **If not found**: The engine initiates the multi-stage analysis pipeline.
 
 ---
 
-## MongoDB Collections (Schema)
+### Phase B: Analysis & NLP Scoring Pipeline
 
-`
-Database: ai_resume_analyzer
+The resume text goes through 6 parallel/sequential processors:
 
-users
-  username       (string, unique)
-  password_hash  (bcrypt - never plain text)
-  role           (user | admin)
+```
+                   ┌──────────────────────────────┐
+                   │       RAW RESUME TEXT        │
+                   └──────────────┬───────────────┘
+                                  │
+      ┌───────────────────────────┼──────────────────────────┐
+      ▼                           ▼                          ▼
+┌──────────────┐            ┌──────────────┐           ┌──────────────┐
+│  AI Parsing  │            │  Exp Level   │           │ Resume Score │
+│ (Groq Llama) │            │ (Rule-Based) │           │ (Rule-Based) │
+└──────┬───────┘            └──────┬───────┘           └──────┬───────┘
+       │                           │                          │
+       ▼                           ▼                          ▼
+{name, skills[]}            "Intermediate"                 85 / 100
+       │                           │                          │
+       └───────────────────────────┼──────────────────────────┘
+                                  ▼
+                     [ Semantic Matching & Embed ]
+                                  │
+                                  ├─► Build semantic text block
+                                  ├─► Embed resume via SentenceTransformer (384-dim)
+                                  ├─► Embed Target Job Description
+                                  ├─► Cosine Similarity -> Job Match Score
+```
 
-resumes          (one per unique resume, deduplicated by SHA-256)
-  _id            (ObjectId)
-  name, email, phone
-  skills[]
-  experience_level
-  score, score_breakdown{}
-  target_role, job_match_score
-  present_skills[], missing_skills[]
-  embedding[]    (384-dim float vector)
-  resume_hash    (SHA-256 for deduplication)
-  cluster_id     (set after KMeans)
-  timestamp
+#### 1. AI Parsing (`backend/parser/resume_parser.py`)
+* Extracts unstructured skills and name via **Groq's API** using `llama-3.1-8b-instant`.
+* Extracts contact info (email & phone number) using robust regular expressions (Regex) for maximum speed and deterministic accuracy.
 
-analytics        (one-to-many with resumes)
-  resume_id   -> references resumes._id
-  target_role
-  job_match_score
-  timestamp
+#### 2. Experience Level Detection (`backend/analysis/experience_level.py`)
+* A rule-based parser searches for specific professional terms (e.g., `"years experience"`, `"intern"`, `"internship"`, `"fresher"`) combined with total page count.
+* Classifies candidates into: **Fresher**, **Intermediate**, or **Experienced**.
 
-feedback
-  name, email
-  rating (1-5)
-  comments
-  timestamp
-`
+#### 3. Quality Scoring (`backend/analysis/resume_score.py`)
+* Evaluates resume content formatting and structural completeness.
+* Looks for headers corresponding to standard resume sections (Summary, Education, Work Experience, Projects, Skills, Certifications) and awards specific weights up to a score of 100.
 
----
-
-## File Map
-
-`
-app/
-  main.py                    ENTRY - routing, session, auth gate
-  views/
-    login.py                 Auth UI -> auth.py
-    home.py                  Landing page
-    user.py                  CORE - orchestrates full pipeline
-    admin.py                 Admin dashboard - reads MongoDB
-    feedback.py              Feedback form -> MongoDB
-    about.py                 Static info + contact form
-
-backend/
-  parser/
-    pdf_reader.py            PDF -> raw text (pdfminer)
-    resume_parser.py         Text -> {name, email, phone, skills}
-                             Skills: Groq API (Llama 3)
-                             Email/Phone: regex
-
-  analysis/
-    experience_level.py      Rule-based: Fresher/Intermediate/Experienced
-    resume_score.py          Section scoring (0-100)
-    skill_gap.py             present vs missing skills
-    admin_insights.py        Aggregation queries for charts
-
-  nlp/
-    embeddings.py            SentenceTransformer -> 384-dim vector
-    similarity.py            Cosine similarity
-
-  recommender/
-    course_recommender.py    role -> curated courses + videos
-
-  database/
-    db.py                    MongoDB connection (singleton)
-    auth.py                  register_user, verify_user (bcrypt)
-    user_data.py             save/load resumes + embeddings
-    analytics.py             save_analytics_record
-
-  utils/
-    constants.py             ROLE_SKILLS mapping
-    job_roles.py             JOB_ROLE_DESCRIPTIONS (~100 words each)
-    normalizer.py            skill aliases + normalization
-    sematic_text_builder.py  structured text for embedding
-    helpers.py               file save utility
-`
+#### 4. Semantic Matching (`backend/nlp/embeddings.py` & `backend/nlp/similarity.py`)
+* Resolves spelling variants and aliases using `normalize_skills()`.
+* Formulates a descriptive candidate profile using `build_semantic_resume_text()`.
+* Converts both the candidate profile and the target job description into 384-dimensional dense vectors using **SentenceTransformers** (`all-MiniLM-L6-v2`).
+* Computes the semantic similarity between the candidate and the job profile using **Cosine Similarity**:
+  $$\text{Similarity} = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}$$
 
 ---
 
-## AI & NLP Stack Decisions
+### Phase C: Data Persistence & Recommendation
 
-| Task | Method | Why |
-|---|---|---|
-| Skill/name extraction | Groq API (Llama 3) | Context-aware, understands resume phrasing |
-| Email/Phone | Regex | Accurate, deterministic, free |
-| Job matching | SentenceTransformers + cosine | Semantic meaning comparison |
-| Resume scoring | Rule-based | Explainable - user sees why they scored X |
-| Experience detection | Rule-based | Fast, transparent |
-| Clustering | KMeans on embeddings | Groups similar resumes |
+1. **MongoDB Write**:
+   * The analyzed resume is stored in the `resumes` collection.
+   * A separate analytic logging record is inserted in the `analytics` collection to record this calculation event.
+2. **Career Recommendations (`backend/recommender/course_recommender.py`)**:
+   * Identifies candidate missing skills by comparing resume skills against the target role requirements.
+   * Maps missing skills directly to a curated dictionary of online certifications, video courses, and interview preparation guides.
 
 ---
 
-## Environment Variables
+## 🛠️ 5. Admin Dashboard Architecture
 
-| Key | File | Purpose |
-|---|---|---|
-| MONGODB_URI | backend/database/db.py | MongoDB Atlas connection |
-| GROQ_API_KEY | backend/parser/resume_parser.py | Llama 3 skill extraction |
+The Admin dashboard ([admin.py](file:///c:/Users/ADMIN/Documents/Projects/AI_Resume_Analyzer/app/views/admin.py)) provides cross-portfolio insights using visual widgets.
 
-Stored in .env locally and Streamlit Cloud Secrets for deployment.
+### Data Analytics & Aggregation
+* **Global Missing Skills**: Counts missing skills across all uploaded resumes using python's `Counter` to show skill gaps.
+* **Experience & Performance Split**: Renders Plotly pie charts and bar charts summarizing matching score distributions and role metrics.
 
----
-
-## End-to-End Flow Summary
-
-`
-Browser
-  -> Streamlit Cloud (main.py)
-    -> Auth gate (session_state check)
-      -> MongoDB + bcrypt login verified
-        -> PDF uploaded -> pdfminer extracts text
-          -> SHA-256 dedup check
-            -> Groq AI extracts skills (Llama 3)
-              -> Rule-based: score + experience level
-                -> SentenceTransformer: resume + JD embeddings
-                  -> Cosine similarity: job match %
-                    -> Skill gap: present vs missing
-                      -> Save to MongoDB (resumes + analytics)
-                        -> Courses + videos recommended
-                          -> Everything rendered in Streamlit UI
-`
-
-## 📊 System Architecture & Flow Diagrams
-
-# AI Resume Analyzer — Diagrams
+### Machine Learning Insights
+* **🔍 Semantic Similarity Search**:
+  1. The administrator inputs a text query (e.g., `"React developer with AWS knowledge"`).
+  2. The query is converted into a vector embedding using the same SentenceTransformer model.
+  3. A vector search is executed using cosine similarity against all stored embeddings in MongoDB.
+  4. Returns the top matches ranked by relevance.
+* **📦 KMeans Resume Clustering**:
+  1. Loads all 384-dimensional embeddings from the database.
+  2. Runs a **K-Means clustering algorithm** to group resumes based on semantic similarities.
+  3. Updates cluster assignments (`cluster_id`) in MongoDB.
+  4. Uses Principal Component Analysis (PCA) to project the high-dimensional clusters onto a 2D Plotly scatter plot.
 
 ---
 
-## 1. Authentication Gate
+## 🗄️ 6. Database Collections Schema
+
+MongoDB database schema details:
+
+### 1. `users` Collection
+Stores credential hashes and authorization levels.
+```json
+{
+  "_id": "ObjectId",
+  "username": "admin",
+  "password_hash": "$2b$12$...", // bcrypt salted hash
+  "role": "admin" // "user" | "admin"
+}
+```
+
+### 2. `resumes` Collection
+Stores full analysis records for unique resumes (keyed on raw text SHA-256 hash).
+```json
+{
+  "_id": "ObjectId",
+  "name": "Chidvilas",
+  "email": "candidate@example.com",
+  "phone": "9876543210",
+  "skills": ["Python", "Streamlit", "MongoDB"],
+  "experience_level": "Intermediate",
+  "score": 85,
+  "score_breakdown": {
+    "has_summary": true,
+    "has_education": true,
+    "has_experience": true
+  },
+  "target_role": "Data Scientist",
+  "job_match_score": 0.78,
+  "present_skills": ["Python", "MongoDB"],
+  "missing_skills": ["SQL", "Machine Learning"],
+  "embedding": [0.012, -0.045, ...], // 384-dimensional vector
+  "resume_hash": "a1b2c3d4...", // SHA-256 unique string
+  "cluster_id": 2, // Assigned via K-Means
+  "timestamp": "ISODate"
+}
+```
+
+### 3. `analytics` Collection
+Event log tracking every analysis query. Features a **one-to-many relationship** (One resume can link to multiple analysis runs for different target roles).
+```json
+{
+  "_id": "ObjectId",
+  "resume_id": "ObjectId", // References resumes._id
+  "target_role": "Machine Learning Engineer",
+  "job_match_score": 0.81,
+  "timestamp": "ISODate"
+}
+```
+
+### 4. `feedback` Collection
+Stores user reviews, comments, and satisfaction metrics.
+```json
+{
+  "_id": "ObjectId",
+  "name": "User Name",
+  "email": "user@example.com",
+  "rating": 5, // 1 to 5 stars
+  "comments": "This tool is amazing!",
+  "timestamp": "ISODate"
+}
+```
+
+---
+
+## 📊 7. System Architecture & Flow Diagrams
+
+Here is a visual breakdown of the structural interactions within the system.
+
+### 1. Authentication Gate
 
 ```mermaid
 flowchart TD
@@ -331,7 +277,7 @@ flowchart TD
 
 ---
 
-## 2. Role-Based Navigation
+### 2. Role-Based Navigation
 
 ```mermaid
 flowchart LR
@@ -344,7 +290,7 @@ flowchart LR
 
 ---
 
-## 3. Resume Analysis Pipeline
+### 3. Resume Analysis Pipeline
 
 ```mermaid
 flowchart TD
@@ -385,7 +331,7 @@ flowchart TD
 
 ---
 
-## 4. MongoDB ER Diagram
+### 4. MongoDB ER Diagram
 
 ```mermaid
 erDiagram
@@ -436,7 +382,7 @@ erDiagram
 
 ---
 
-## 5. Caching Behaviour
+### 5. Caching Behaviour
 
 ```mermaid
 sequenceDiagram
@@ -464,7 +410,7 @@ sequenceDiagram
 
 ---
 
-## 6. End-to-End System Flow
+### 6. End-to-End System Flow
 
 ```mermaid
 flowchart TD
@@ -497,7 +443,7 @@ flowchart TD
 
 ---
 
-## 7. AI vs Rule-Based Decision Map
+### 7. AI vs Rule-Based Decision Map
 
 ```mermaid
 flowchart LR
