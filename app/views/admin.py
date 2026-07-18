@@ -110,7 +110,10 @@ def admin_page():
         unsafe_allow_html=True
     )
 
-    col1, col2, col3 = st.columns(3)
+    total_registered_users = db["users"].count_documents({})
+    unique_active_users = df["username"].nunique() if "username" in df.columns else 0
+
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown(
@@ -138,8 +141,19 @@ def admin_page():
         st.markdown(
             f"""
             <div class="metric-highlight">
-                <div class="mh-label">🎯 Unique Job Roles</div>
-                <div class="mh-value">{df["target_role"].nunique()}</div>
+                <div class="mh-label">👤 Active Users</div>
+                <div class="mh-value">{unique_active_users}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col4:
+        st.markdown(
+            f"""
+            <div class="metric-highlight">
+                <div class="mh-label">👥 Registered Users</div>
+                <div class="mh-value">{total_registered_users}</div>
             </div>
             """,
             unsafe_allow_html=True

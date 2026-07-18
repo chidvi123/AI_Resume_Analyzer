@@ -48,10 +48,7 @@ def calculate_resume_score(text: str) -> dict:
         "professional experience",
         "worked at",
         "employment",
-        "experience at",
-        "intern at",
-        "software intern",
-        "engineering intern"
+        "experience at"
     ]
 
     training_keywords = [

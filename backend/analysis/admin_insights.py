@@ -8,13 +8,19 @@ from bson import ObjectId
 # -------------------------------------------------
 
 def get_global_missing_skills():
-    db=get_db()
-    resumes_col=db["resumes"]
+    db = get_db()
+    analytics_col = db["analytics"]
+    counter = Counter()
 
-    counter=Counter()
-
-    for r in resumes_col.find({},{"skills_missing":1}):
-        counter.update(r.get("skills_missing",[]))
+    # Deduplicate by resume_id so we only count each candidate's profile once globally
+    seen_resumes = set()
+    for r in analytics_col.find({}, {"resume_id": 1, "skills_missing": 1}):
+        rid = r.get("resume_id")
+        if rid:
+            rid_str = str(rid)
+            if rid_str not in seen_resumes:
+                seen_resumes.add(rid_str)
+                counter.update(r.get("skills_missing", []))
     
     return dict(counter)
 
@@ -24,27 +30,21 @@ def get_global_missing_skills():
 # -------------------------------------------------
 
 def get_rolewise_missing_skills():
-    db=get_db()
-    resumes_col=db["resumes"]
-    analytics_col=db["analytics"]
-    role_skill_counter=defaultdict(Counter)
+    db = get_db()
+    analytics_col = db["analytics"]
+    role_skill_counter = defaultdict(Counter)
 
-    for a in analytics_col.find({},{"resume_id":1,"target_role":1}):
-        resume_id = a.get("resume_id")
+    # Deduplicate by (resume_id, target_role) so we count once per candidate per role matching
+    seen_searches = set()
+    for a in analytics_col.find({}, {"resume_id": 1, "target_role": 1, "skills_missing": 1}):
+        rid = a.get("resume_id")
         role = a.get("target_role")
-
-        if not resume_id or not role:
-            continue
-
-        resume = resumes_col.find_one(
-            {"_id": ObjectId(resume_id)},
-            {"skills_missing": 1}
-        )
-
-        if resume:
-            role_skill_counter[role].update(
-                resume.get("skills_missing", [])
-            )
+        if rid and role:
+            search_key = (str(rid), role)
+            if search_key not in seen_searches:
+                seen_searches.add(search_key)
+                role_skill_counter[role].update(a.get("skills_missing", []))
+            
     return {role: dict(counter) for role, counter in role_skill_counter.items()}
 
         
@@ -107,44 +107,49 @@ def get_rolewise_job_match():
 # -------------------------------------------------
 
 def get_cluster_insights():
-    db=get_db()
-    resumes_col=db["resumes"]
+    db = get_db()
+    resumes_col = db["resumes"]
+    analytics_col = db["analytics"]
 
-    clusters=defaultdict(list)
+    clusters = defaultdict(list)
 
+    # 1. Fetch resumes grouped by their KMeans cluster assignment
     for r in resumes_col.find(
         {},
         {
-            "cluster_id":1,
-            "resume_score":1,
-            "skills_missing":1,
-            "experience_level":1,
+            "cluster_id": 1,
+            "resume_score": 1,
+            "experience_level": 1,
         },
     ):
         if "cluster_id" in r:
             clusters[r["cluster_id"]].append(r)
     
-    cluster_insights={}
+    cluster_insights = {}
 
-    for cid,items in clusters.items():
+    # 2. Iterate through each cluster to aggregate features
+    for cid, items in clusters.items():
         if not items:
             continue
 
-        scores=[r["resume_score"] for r in items]
-        exp_levels=[r["experience_level"] for r in items]
+        scores = [r["resume_score"] for r in items]
+        exp_levels = [r["experience_level"] for r in items]
 
-        skill_counter=Counter()
+        skill_counter = Counter()
 
         for r in items:
-            skill_counter.update(r.get("skills_missing",[]))
+            # Query the analytics collection to get missing skills logged for this resume ID
+            analytics_docs = list(analytics_col.find({"resume_id": r["_id"]}, {"skills_missing": 1}))
+            for doc in analytics_docs:
+                skill_counter.update(doc.get("skills_missing", []))
         
-        cluster_insights[cid]={
-            "count":len(items),
-            "avg_resume_score":round(mean(scores),2),
-            "common_missing_skills":[
-                s for s,_ in skill_counter.most_common(5)
+        cluster_insights[cid] = {
+            "count": len(items),
+            "avg_resume_score": round(mean(scores), 2),
+            "common_missing_skills": [
+                s for s, _ in skill_counter.most_common(5)
             ],
-            "dominant_experience":Counter(exp_levels).most_common(1)[0][0],
+            "dominant_experience": Counter(exp_levels).most_common(1)[0][0],
         }
     return cluster_insights
 

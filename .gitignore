@@ -45,3 +45,4 @@ data/
 mongodb/
 
 .env
+seed_admin.py

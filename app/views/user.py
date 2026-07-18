@@ -15,6 +15,7 @@ from backend.utils.sematic_text_builder import build_semantic_resume_text
 from backend.utils.job_roles import JOB_ROLE_DESCRIPTIONS
 from backend.nlp.embeddings import get_embedding
 from backend.nlp.similarity import cosine_similarity
+
 from backend.recommender.course_recommender import (
     get_recommended_courses,
     resume_videos,
@@ -81,11 +82,31 @@ def user_page():
         st.error("Could not extract enough text from this PDF.")
         st.stop()
 
-    parsed_data = parse_resume(extracted_text)
-    experience_level = detect_experience_level(extracted_text)
-    score_data = calculate_resume_score(extracted_text)
-    resume_score = score_data["score"]
-    score_breakdown = score_data["breakdown"]
+    # Generate SHA-256 hash of raw text for deduplication check at the START
+    resume_hash = hashlib.sha256(extracted_text.encode("utf-8")).hexdigest()
+    existing = get_resume_by_hash(resume_hash)
+
+    if existing:
+        # Cache HIT: retrieve everything directly from MongoDB
+        parsed_data = existing["parsed_data"]
+        experience_level = existing["experience_level"]
+        resume_score = existing["resume_score"]
+        score_breakdown = existing.get("score_breakdown", {
+            "Experience/Internship": 0, "Skills": 0, "Projects": 0,
+            "Education": 0, "Summary/Objective": 0, "Certification": 0
+        })
+        semantic_text = existing.get("semantic_text", "")
+        resume_embedding = existing["embedding"]
+        st.toast("Loaded cached analysis from MongoDB! 💾", icon="💾")
+    else:
+        # Cache MISS: run full parsing and NLP pipeline
+        parsed_data = parse_resume(extracted_text)
+        experience_level = detect_experience_level(extracted_text)
+        score_data = calculate_resume_score(extracted_text)
+        resume_score = score_data["score"]
+        score_breakdown = score_data["breakdown"]
+        semantic_text = ""
+        resume_embedding = None
 
     placeholder.empty()
     st.toast("Resume parsed successfully!", icon="✅")
@@ -221,13 +242,16 @@ def user_page():
     with tab3:
 
         # ===================== JOB MATCH =====================
-        semantic_text = build_semantic_resume_text(
-            raw_text=extracted_text,
-            skills=resume_skills,
-            experience_level=experience_level
-        )
+        if not semantic_text or resume_embedding is None:
+            semantic_text = build_semantic_resume_text(
+                raw_text=extracted_text,
+                skills=resume_skills,
+                experience_level=experience_level
+            )
+            # Retrieve array, convert to list later for DB storage
+            resume_embedding_val = get_embedding(semantic_text)
+            resume_embedding = resume_embedding_val.tolist() if hasattr(resume_embedding_val, "tolist") else resume_embedding_val
 
-        resume_embedding = get_embedding(semantic_text)
         job_embedding = get_embedding(JOB_ROLE_DESCRIPTIONS[target_role])
 
         match_score = cosine_similarity(resume_embedding, job_embedding)
@@ -288,31 +312,29 @@ def user_page():
                     st.video(video_url)
 
     # ===================== SAVE ANALYTICS =====================
-    resume_hash = hashlib.sha256(semantic_text.encode("utf-8")).hexdigest()
-
-    resume_record = {
-        "resume_hash": resume_hash,
-        "semantic_text": semantic_text,
-        "parsed_data": parsed_data,
-        "experience_level": experience_level,
-        "resume_score": resume_score,
-        "skills_present": present_skills,
-        "skills_missing": missing_skills,
-        "embedding": resume_embedding.tolist(),
-    }
-
-    existing = get_resume_by_hash(resume_hash)
     if not existing:
+        resume_record = {
+            "resume_hash": resume_hash,
+            "semantic_text": semantic_text,
+            "parsed_data": parsed_data,
+            "experience_level": experience_level,
+            "resume_score": resume_score,
+            "score_breakdown": score_breakdown,
+            "embedding": resume_embedding,
+        }
         save_resume(resume_record)
         existing = get_resume_by_hash(resume_hash)
 
     save_analytics_record({
+        "username": st.session_state.username,
         "resume_id": existing["_id"],
         "timestamp": datetime.now(),
         "experience_level": experience_level,
         "resume_score": resume_score,
         "target_role": target_role,
         "job_match_score": match_score,
+        "skills_present": present_skills,
+        "skills_missing": missing_skills,
         "skills_present_count": len(present_skills),
         "skills_missing_count": len(missing_skills)
     })
