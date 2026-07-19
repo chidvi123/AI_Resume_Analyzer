@@ -260,17 +260,17 @@ Here is a visual breakdown of the structural interactions within the system.
 
 ```mermaid
 flowchart TD
-    A([User Opens App]) --> B{session_state\nlogged_in?}
-    B -- ❌ False --> C[Show Login Page\napp/views/login.py]
-    B -- ✅ True --> D[Show Sidebar\n+ Navigation]
-    C --> E{Login or Register?}
-    E -- Login --> F[verify_user\nauth.py]
-    E -- Register --> G[register_user\nauth.py]
-    F --> H[(MongoDB\nusers collection)]
+    A([User Opens App]) --> B{"session_state<br/>logged_in?"}
+    B -- "❌ False" --> C["Show Login Page<br/>app/views/login.py"]
+    B -- "✅ True" --> D["Show Sidebar<br/>+ Navigation"]
+    C --> E{"Login or Register?"}
+    E -- Login --> F["verify_user<br/>auth.py"]
+    E -- Register --> G["register_user<br/>auth.py"]
+    F --> H[("(MongoDB<br/>users collection)")]
     G --> H
-    H -- bcrypt match --> I[Set session_state\nlogged_in=True\nrole=user/admin]
-    H -- no match --> J[Show Error]
-    G -- new user --> K[bcrypt hash\nstore in DB\nAuto-login]
+    H -- "bcrypt match" --> I["Set session_state<br/>logged_in=True<br/>role=user/admin"]
+    H -- "no match" --> J["Show Error"]
+    G -- "new user" --> K["bcrypt hash<br/>store in DB<br/>Auto-login"]
     K --> I
     I --> D
 ```
@@ -281,11 +281,11 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[Logged In User] --> B{role?}
-    B -- user --> C[🏠 Home\n👤 User\n💬 Feedback\nℹ️ About]
-    B -- admin --> D[🏠 Home\n👤 User\n💬 Feedback\nℹ️ About\n🛠️ Admin]
-    C --> E[app/views/home.py\napp/views/user.py\napp/views/feedback.py\napp/views/about.py]
-    D --> F[All above +\napp/views/admin.py]
+    A["Logged In User"] --> B{"role?"}
+    B -- user --> C["🏠 Home<br/>👤 User<br/>💬 Feedback<br/>ℹ️ About"]
+    B -- admin --> D["🏠 Home<br/>👤 User<br/>💬 Feedback<br/>ℹ️ About<br/>🛠️ Admin"]
+    C --> E["app/views/home.py<br/>app/views/user.py<br/>app/views/feedback.py<br/>app/views/about.py"]
+    D --> F["All above +<br/>app/views/admin.py"]
 ```
 
 ---
@@ -294,38 +294,38 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A([User Uploads PDF]) --> B[save_uploaded_file\nhelpers.py]
-    B --> C[extract_text_from_pdf\npdf_reader.py]
-    C --> D[SHA-256 Hash of Text]
-    D --> E{get_resume_by_hash\nuser_data.py}
-    E -- Already in DB --> F[Load Cached Result\nSkip Re-Analysis]
-    E -- New Resume --> G[Run Full Pipeline]
+    A([User Uploads PDF]) --> B["save_uploaded_file<br/>helpers.py"]
+    B --> C["extract_text_from_pdf<br/>pdf_reader.py"]
+    C --> D["SHA-256 Hash of Text"]
+    D --> E{"get_resume_by_hash<br/>user_data.py"}
+    E -- Already in DB --> F["Load Cached Result<br/>Skip Re-Analysis"]
+    E -- New Resume --> G["Run Full Pipeline"]
 
-    G --> H[parse_resume\nresume_parser.py]
-    H --> H1[Groq API - Llama 3\nname + skills]
-    H --> H2[Regex\nemail + phone]
+    G --> H["parse_resume<br/>resume_parser.py"]
+    H --> H1["Groq API - Llama 3<br/>name + skills"]
+    H --> H2["Regex<br/>email + phone"]
 
-    G --> I[detect_experience_level\nexperience_level.py\nFresher / Intermediate / Experienced]
-    G --> J[calculate_resume_score\nresume_score.py\n0-100 + breakdown]
-    G --> K[normalize_skills\nnormalizer.py\naliases + lowercase]
-    K --> L[analyze_skill_gap\nskill_gap.py\npresent vs missing]
+    G --> I["detect_experience_level<br/>experience_level.py<br/>Fresher / Intermediate / Experienced"]
+    G --> J["calculate_resume_score<br/>resume_score.py<br/>0-100 + breakdown"]
+    G --> K["normalize_skills<br/>normalizer.py<br/>aliases + lowercase"]
+    K --> L["analyze_skill_gap<br/>skill_gap.py<br/>present vs missing"]
 
-    G --> M[build_semantic_text\nsematic_text_builder.py]
-    M --> N[get_embedding\nembeddings.py\nSentenceTransformer\n384-dim vector]
-    N --> O[cosine_similarity\nsimilarity.py\nvs JD embedding]
-    O --> P[job_match_score\n0.0 to 1.0]
+    G --> M["build_semantic_text<br/>sematic_text_builder.py"]
+    M --> N["get_embedding<br/>embeddings.py<br/>SentenceTransformer<br/>384-dim vector"]
+    N --> O["cosine_similarity<br/>similarity.py<br/>vs JD embedding"]
+    O --> P["job_match_score<br/>0.0 to 1.0"]
 
-    H1 --> Q[Assemble Full Record]
+    H1 --> Q["Assemble Full Record"]
     H2 --> Q
     I --> Q
     J --> Q
     L --> Q
     P --> Q
 
-    Q --> R[(MongoDB\nresumes collection)]
-    Q --> S[(MongoDB\nanalytics collection\nresume_id + role + score)]
-    Q --> T[get_recommended_courses\ncourse_recommender.py]
-    T --> U[Render Results\nin Streamlit UI]
+    Q --> R[("(MongoDB<br/>resumes collection)")]
+    Q --> S[("(MongoDB<br/>analytics collection<br/>resume_id + role + score)")]
+    Q --> T["get_recommended_courses<br/>course_recommender.py"]
+    T --> U["Render Results<br/>in Streamlit UI"]
     F --> U
 ```
 
@@ -414,30 +414,31 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Browser([Browser]) --> SL[Streamlit Cloud\napp/main.py]
-    SL --> AG{Auth Gate\nsession_state}
-    AG -- not logged in --> LP[Login Page\nlogin.py]
-    LP --> MDB1[(MongoDB\nusers)]
+    Browser([Browser]) --> SL["Streamlit Cloud<br/>app/main.py"]
+    SL --> AG{"Auth Gate<br/>session_state"}
+    AG -- "not logged in" --> LP["Login Page<br/>login.py"]
+    LP --> MDB1[("(MongoDB<br/>users)")]
     MDB1 -- verified --> AG
-    AG -- logged in --> NAV[Role-Based Sidebar]
-    NAV --> UP[User Uploads PDF]
-    UP --> PDF[pdfminer\nextract text]
-    PDF --> HASH[SHA-256 Hash]
-    HASH --> DUP{In MongoDB?}
-    DUP -- yes --> CACHE[Load Cached\nResult]
-    DUP -- no --> GROQ[Groq API\nLlama 3\nSkill Extraction]
-    GROQ --> RULES[Rule-Based\nScoring + Experience]
-    RULES --> ST[SentenceTransformer\nEmbedding 384-dim]
-    ST --> COS[Cosine Similarity\nvs Job Description]
-    COS --> SKGAP[Skill Gap\nAnalysis]
-    SKGAP --> SAVE[(MongoDB\nresumes + analytics)]
-    SAVE --> REC[Course\nRecommendations]
-    REC --> UI([Streamlit UI\nResults Displayed])
+    AG -- "logged in" --> NAV["Role-Based Sidebar"]
+    NAV --> UP["User Uploads PDF"]
+    UP --> PDF["pdfminer<br/>extract text"]
+    PDF --> HASH["SHA-256 Hash"]
+    HASH --> DUP{"In MongoDB?"}
+    DUP -- yes --> CACHE["Load Cached<br/>Result"]
+    DUP -- no --> GROQ["Groq API<br/>Llama 3<br/>Skill Extraction"]
+    GROQ --> RULES["Rule-Based<br/>Scoring + Experience"]
+    RULES --> ST["SentenceTransformer<br/>Embedding 384-dim"]
+    ST --> COS["Cosine Similarity<br/>vs Job Description"]
+    COS --> SKGAP["Skill Gap<br/>Analysis"]
+    SKGAP --> SAVE[("(MongoDB<br/>resumes + analytics)")]
+    SAVE --> REC["Course<br/>Recommendations"]
+    SAVE --> REC
+    REC --> UI[("Streamlit UI<br/>Results Displayed")]
     CACHE --> UI
 
-    NAV -- admin role --> ADMIN[Admin Dashboard\nadmin.py]
-    ADMIN --> MDB2[(MongoDB\nAll Collections)]
-    MDB2 --> CHARTS[Plotly Charts\nClustering\nSimilarity Search]
+    NAV -- "admin role" --> ADMIN["Admin Dashboard<br/>admin.py"]
+    ADMIN --> MDB2[("(MongoDB<br/>All Collections)")]
+    MDB2 --> CHARTS["Plotly Charts<br/>Clustering<br/>Similarity Search"]
     CHARTS --> UI
 ```
 
@@ -447,19 +448,19 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[Resume Text] --> B{What to extract?}
+    A["Resume Text"] --> B{"What to extract?"}
 
-    B --> C[Skills + Name]
-    B --> D[Email + Phone]
-    B --> E[Experience Level]
-    B --> F[Resume Score]
-    B --> G[Job Match]
+    B --> C["Skills + Name"]
+    B --> D["Email + Phone"]
+    B --> E["Experience Level"]
+    B --> F["Resume Score"]
+    B --> G["Job Match"]
 
-    C -->|Context needed\nAI required| C1[Groq API\nLlama 3\nllama-3.1-8b-instant]
-    D -->|Pattern-based\n100% deterministic| D1[Regex]
-    E -->|Binary signals\nkeyword sections| E1[Rule-Based]
-    F -->|Section detection\nexplainable| F1[Rule-Based]
-    G -->|Semantic meaning\nembedding math| G1[SentenceTransformers\nCosine Similarity]
+    C -->|Context needed<br/>AI required| C1["Groq API<br/>Llama 3<br/>llama-3.1-8b-instant"]
+    D -->|Pattern-based<br/>100% deterministic| D1["Regex"]
+    E -->|Binary signals<br/>keyword sections| E1["Rule-Based"]
+    F -->|Section detection<br/>explainable| F1["Rule-Based"]
+    G -->|Semantic meaning<br/>embedding math| G1["SentenceTransformers<br/>Cosine Similarity"]
 
     style C1 fill:#6366f1,color:#fff
     style D1 fill:#10b981,color:#fff
